@@ -1,0 +1,528 @@
+/* ============================================================
+   DriveEase — Home Page Specific Styles
+   home.css
+   ============================================================ */
+
+/* ============================================================
+   1. Hero Section
+   ============================================================ */
+.hero-section {
+  position: relative;
+  min-height: 82vh;
+  background: url('https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=1400&q=80') center center / cover no-repeat;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(11, 29, 58, 0.88) 0%, rgba(26, 60, 110, 0.78) 50%, rgba(15, 23, 42, 0.85) 100%);
+  z-index: 1;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  padding-top: 4.5rem;
+  padding-bottom: 5.5rem;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 0.45rem 1.125rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: 0.02em;
+}
+
+.hero-title {
+  font-family: var(--font-heading);
+  font-size: clamp(2.5rem, 5.5vw, 4rem);
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.15;
+  margin-bottom: 1.25rem;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+}
+
+.hero-title span {
+  color: var(--accent);
+  background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero-subtitle {
+  font-size: 1.125rem;
+  color: rgba(255, 255, 255, 0.88);
+  line-height: 1.7;
+}
+
+/* ============================================================
+   2. Hero Booking Widget
+   ============================================================ */
+.booking-widget-hero {
+  background: #ffffff;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+  padding: 1.75rem 2rem;
+  position: relative;
+  z-index: 3;
+}
+
+.bw-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.75rem;
+}
+
+.bw-tab {
+  background: transparent;
+  border: none;
+  padding: 0.5rem 1.25rem;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  transition: var(--transition);
+  cursor: pointer;
+}
+
+.bw-tab:hover {
+  color: var(--primary);
+  background: var(--primary-lighter);
+}
+
+.bw-tab.active {
+  background: var(--primary-lighter);
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.bw-fields {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--surface-2);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.875rem 1.25rem;
+  flex-wrap: wrap;
+}
+
+.bw-field {
+  flex: 1;
+  min-width: 160px;
+  display: flex;
+  flex-direction: column;
+}
+
+.bw-field label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.bw-field .form-select,
+.bw-field .form-control {
+  background: transparent;
+  border: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  padding: 0.2rem 0;
+  box-shadow: none !important;
+}
+
+.bw-divider {
+  width: 1px;
+  height: 40px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+.bw-search {
+  flex-shrink: 0;
+}
+
+.btn-search-cars {
+  background: var(--primary);
+  color: #ffffff;
+  border: none;
+  padding: 0.875rem 1.75rem;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  font-size: 0.95rem;
+  transition: var(--transition);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.btn-search-cars:hover {
+  background: var(--primary-hover);
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(26, 60, 110, 0.35);
+}
+
+.bw-popular {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.bw-popular-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.bw-pill {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 0.3rem 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: var(--transition);
+  cursor: pointer;
+}
+
+.bw-pill:hover {
+  background: var(--primary-lighter);
+  color: var(--primary);
+  border-color: var(--primary-light);
+}
+
+/* ============================================================
+   3. Hero Stats Bar
+   ============================================================ */
+.hero-stats-bar {
+  position: relative;
+  z-index: 2;
+  background: #0b1d3a;
+  color: #ffffff;
+  padding: 1.5rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.hero-stat {
+  text-align: center;
+  padding: 0.75rem 0.5rem;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.row.g-0 > div:last-child .hero-stat {
+  border-right: none;
+}
+
+.hero-stat-value {
+  font-family: var(--font-heading);
+  font-size: 2.125rem;
+  font-weight: 800;
+  color: var(--accent);
+  line-height: 1;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.hero-stat-label {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.75);
+  font-weight: 500;
+}
+
+/* ============================================================
+   4. Categories Grid
+   ============================================================ */
+.categories-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 1.25rem;
+}
+
+/* ============================================================
+   5. Car Filter Pills
+   ============================================================ */
+.car-filter-pills {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.filter-pill {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  padding: 0.5rem 1.25rem;
+  border-radius: var(--radius-pill);
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.filter-pill:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-lighter);
+}
+
+.filter-pill.active {
+  background: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary);
+  box-shadow: 0 4px 12px rgba(26, 60, 110, 0.25);
+}
+
+/* ============================================================
+   6. How It Works Steps
+   ============================================================ */
+.how-it-works-row {
+  position: relative;
+}
+
+.how-step-icon-wrap {
+  width: 64px;
+  height: 64px;
+  background: var(--primary-lighter);
+  color: var(--primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  margin: 0 auto;
+  transition: var(--transition);
+}
+
+.how-step:hover .how-step-icon-wrap {
+  background: var(--primary);
+  color: #ffffff;
+  transform: scale(1.1);
+}
+
+/* ============================================================
+   7. Reviews Section & Summary
+   ============================================================ */
+.review-summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 2rem 3rem;
+  max-width: 780px;
+  margin: 0 auto;
+  box-shadow: var(--shadow-sm);
+  flex-wrap: wrap;
+}
+
+.review-summary-score {
+  text-align: center;
+}
+
+.rs-number {
+  font-family: var(--font-heading);
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.review-summary-bars {
+  flex: 1;
+  min-width: 260px;
+}
+
+.rating-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+  font-weight: 600;
+}
+
+.rating-bar .bar {
+  flex: 1;
+  height: 8px;
+  background: var(--surface-2);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.rating-bar .bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 4px;
+}
+
+.carousel-ctrl {
+  width: 44px;
+  height: 44px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 50%;
+  color: var(--text-primary);
+  opacity: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  top: 50%;
+  transform: translateY(-50%);
+  transition: var(--transition);
+  box-shadow: var(--shadow-sm);
+}
+
+.carousel-ctrl:hover {
+  background: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary);
+}
+
+.carousel-control-prev.carousel-ctrl { left: -20px; }
+.carousel-control-next.carousel-ctrl { right: -20px; }
+
+/* ============================================================
+   8. FAQ Contact Card
+   ============================================================ */
+.faq-contact-card {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  background: var(--surface-2);
+  border: 1.5px solid var(--border);
+  padding: 1.25rem 1.5rem;
+  border-radius: var(--radius);
+}
+
+.faq-contact-card i {
+  font-size: 2rem;
+  color: var(--primary);
+  width: 50px;
+  height: 50px;
+  background: var(--primary-lighter);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ============================================================
+   9. Newsletter Section
+   ============================================================ */
+.newsletter-section {
+  padding: 4rem 0;
+}
+
+.newsletter-card {
+  background: var(--primary-gradient);
+  border-radius: var(--radius-xl);
+  padding: 3.5rem 3rem;
+  color: #ffffff;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(26, 60, 110, 0.3);
+}
+
+.newsletter-input-group {
+  background: #ffffff;
+  padding: 0.375rem;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+}
+
+.newsletter-input-group .form-control {
+  border: none !important;
+  box-shadow: none !important;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  padding: 0.75rem 1rem;
+}
+
+.newsletter-btn {
+  background: var(--primary);
+  color: #ffffff;
+  font-weight: 700;
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 1.75rem;
+  transition: var(--transition);
+  border: none;
+}
+
+.newsletter-btn:hover {
+  background: var(--primary-hover);
+  color: #ffffff;
+}
+
+.newsletter-note {
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.75);
+  margin-top: 0.75rem;
+  margin-bottom: 0;
+}
+
+/* App Badges */
+.app-badges {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.app-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 0.45rem 0.875rem;
+  border-radius: var(--radius-sm);
+  color: #ffffff;
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+.app-badge:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+}
+
+.app-badge i { font-size: 1.25rem; }
+.app-badge div span { display: block; font-size: 0.65rem; color: rgba(255,255,255,0.7); text-transform: uppercase; line-height: 1; }
+.app-badge div strong { font-size: 0.85rem; font-weight: 700; line-height: 1.2; }
+
+/* Responsive adjustments */
+@media (max-width: 991.98px) {
+  .hero-section { min-height: auto; }
+  .booking-widget-hero { padding: 1.25rem; }
+  .bw-fields { flex-direction: column; align-items: stretch; gap: 1rem; }
+  .bw-divider { display: none; }
+  .btn-search-cars { width: 100%; }
+  .carousel-control-prev.carousel-ctrl { left: 0; }
+  .carousel-control-next.carousel-ctrl { right: 0; }
+}
