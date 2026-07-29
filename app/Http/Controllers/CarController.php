@@ -87,6 +87,10 @@ class CarController extends Controller
     public function websiteCars(Request $request)
     {
         try {
+            if (Car::count() === 0) {
+                \Illuminate\Support\Facades\Artisan::call('db:seed', ['--force' => true]);
+            }
+
             $query = Car::with('category')->where('status', 'Available');
 
             if ($request->has('category') && $request->category != 'all') {
@@ -109,6 +113,10 @@ class CarController extends Controller
     public function websiteIndex()
     {
         try {
+            if (Car::count() === 0) {
+                \Illuminate\Support\Facades\Artisan::call('db:seed', ['--force' => true]);
+            }
+
             $featuredCars = Car::with('category')->where('status', 'Available')->latest()->take(6)->get();
             $categories   = Category::withCount('cars')->get();
         } catch (\Throwable $e) {
