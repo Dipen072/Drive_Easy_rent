@@ -11,6 +11,3 @@ storage/framework/sessions/*
 storage/framework/views/*
 tests
 README.md
-Dockerfile
-docker-entrypoint.sh
-render.yaml
