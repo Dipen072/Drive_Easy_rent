@@ -1,14 +1,11 @@
 /**
- * DriveEase — Admin Bookings Logic with Quick Actions & Details Modal
+ * DriveEase — Admin Bookings Controller JS with SweetAlert & Backend AJAX
  * admin-bookings.js
  */
 
 let currentStatusFilter = 'all';
 
 $(document).ready(function() {
-  Storage.seed();
-
-  // Read status from URL if present
   const urlParams = new URLSearchParams(window.location.search);
   const statusParam = urlParams.get('status');
 
@@ -16,134 +13,177 @@ $(document).ready(function() {
     currentStatusFilter = statusParam;
     $(`#adminBookingTabs button`).removeClass('active');
     $(`#adminBookingTabs button[data-status="${statusParam}"]`).addClass('active');
+    filterTable();
   }
-
-  renderAdminBookingsTable();
 
   $('#adminBookingTabs button').on('click', function() {
     $('#adminBookingTabs button').removeClass('active');
     $(this).addClass('active');
     currentStatusFilter = $(this).data('status');
-    renderAdminBookingsTable();
+    filterTable();
   });
 
-  $('#bookingSearchInput').on('input', renderAdminBookingsTable);
-
-  $('#toggleSidebarBtn').on('click', () => $('#adminSidebar').toggleClass('collapsed'));
-  $('#themeToggleBtn').on('click', () => Storage.toggleTheme());
+  $('#bookingSearchInput').on('input', filterTable);
 });
 
-function renderAdminBookingsTable() {
-  let bookings = Storage.getBookings();
+function filterTable() {
   const q = $('#bookingSearchInput').val().toLowerCase().trim();
 
-  if (currentStatusFilter !== 'all') {
-    bookings = bookings.filter(b => b.status.toLowerCase() === currentStatusFilter.toLowerCase());
-  }
+  $('#adminBookingsTableBody tr').each(function() {
+    const status = $(this).data('status');
+    const searchData = $(this).data('search') ? $(this).data('search').toString() : '';
 
-  if (q) {
-    bookings = bookings.filter(b => b.id.toLowerCase().includes(q) || b.customerName.toLowerCase().includes(q) || b.carName.toLowerCase().includes(q));
-  }
+    let matchStatus = (currentStatusFilter === 'all' || (status && status.toLowerCase() === currentStatusFilter.toLowerCase()));
+    let matchSearch = (!q || searchData.includes(q));
 
-  if (!bookings.length) {
-    $('#adminBookingsTableBody').html('<tr><td colspan="9" class="text-center p-4 text-muted">No reservations found matching criteria.</td></tr>');
-    return;
-  }
-
-  const html = bookings.map(b => {
-    let actionButtons = '';
-    if (b.status === 'Pending') {
-      actionButtons = `
-        <button class="btn btn-sm btn-success" onclick="changeStatus('${b.id}', 'Confirmed')" title="Approve Reservation"><i class="fas fa-check"></i> Approve</button>
-        <button class="btn btn-sm btn-outline-danger" onclick="changeStatus('${b.id}', 'Cancelled')" title="Reject Reservation"><i class="fas fa-xmark"></i> Reject</button>
-      `;
-    } else if (b.status === 'Confirmed') {
-      actionButtons = `
-        <button class="btn btn-sm btn-primary" onclick="changeStatus('${b.id}', 'Active')" title="Mark Trip Active / Key Handover"><i class="fas fa-key"></i> Handover (Active)</button>
-        <button class="btn btn-sm btn-outline-danger" onclick="changeStatus('${b.id}', 'Cancelled')"><i class="fas fa-ban"></i> Cancel</button>
-      `;
-    } else if (b.status === 'Active') {
-      actionButtons = `
-        <button class="btn btn-sm btn-info text-white" onclick="changeStatus('${b.id}', 'Completed')" title="Mark Vehicle Returned / Completed"><i class="fas fa-flag-checkered"></i> Complete Trip</button>
-      `;
+    if (matchStatus && matchSearch) {
+      $(this).removeClass('d-none');
     } else {
-      actionButtons = `<span class="text-muted font-xs">No Actions Needed</span>`;
+      $(this).addClass('d-none');
     }
-
-    return `
-      <tr>
-        <td class="fw-700 font-mono">${b.id}</td>
-        <td class="fw-600">${b.customerName}</td>
-        <td>${b.carName}</td>
-        <td class="font-sm">${b.pickupDate}</td>
-        <td class="font-sm">${b.returnDate}</td>
-        <td class="fw-700 text-primary">₹${b.total.toLocaleString()}</td>
-        <td><span class="badge-${b.status.toLowerCase()}">${b.status}</span></td>
-        <td><div class="d-flex gap-1">${actionButtons}</div></td>
-        <td>
-          <button class="btn btn-sm btn-outline-secondary" onclick="viewBookingDetails('${b.id}')"><i class="fas fa-eye"></i> Details</button>
-        </td>
-      </tr>
-    `;
-  }).join('');
-
-  $('#adminBookingsTableBody').html(html);
+  });
 }
 
-function changeStatus(id, newStatus) {
-  Storage.updateBookingStatus(id, newStatus);
-  Toast.success('Status Updated', `Booking ${id} status set to ${newStatus}.`);
-  renderAdminBookingsTable();
+function updateAdminStatus(bookingId, newStatus) {
+  let confirmTitle = `Set status to ${newStatus}?`;
+  let confirmText = `Are you sure you want to change this reservation status to ${newStatus}?`;
+
+  if (typeof Swal !== 'undefined') {
+    Swal.fire({
+      title: confirmTitle,
+      text: confirmText,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, Update Status',
+      cancelButtonText: 'Cancel'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        sendAdminStatusChange(bookingId, newStatus);
+      }
+    });
+  } else {
+    if (confirm(confirmText)) {
+      sendAdminStatusChange(bookingId, newStatus);
+    }
+  }
 }
 
-function viewBookingDetails(id) {
-  const b = Storage.getBookingById(id);
-  if (!b) return;
+function sendAdminStatusChange(bookingId, newStatus) {
+  const csrfToken = $('meta[name="csrf-token"]').attr('content');
 
-  $('#bookingModalBody').html(`
-    <div class="row align-items-center g-3 mb-4 p-3 bg-surface-2 rounded-card">
-      <div class="col-md-6">
-        <div class="font-xs text-muted">BOOKING REFERENCE</div>
-        <h4 class="fw-800 font-mono text-primary mb-0">${b.id}</h4>
-        <span class="badge-${b.status.toLowerCase()} mt-1">${b.status}</span>
-      </div>
-      <div class="col-md-6 text-md-end">
-        <div class="font-xs text-muted">TOTAL RESERVATION COST</div>
-        <h3 class="fw-800 text-dark mb-0">₹${b.total.toLocaleString()}</h3>
-        <span class="badge bg-light text-dark font-xs border">${b.payment} (${b.paymentStatus})</span>
-      </div>
-    </div>
+  $.ajax({
+    url: `/admin/bookings/${bookingId}/status`,
+    method: 'POST',
+    data: {
+      _token: csrfToken,
+      status: newStatus
+    },
+    success: function(res) {
+      if (res.success) {
+        if (typeof Swal !== 'undefined') {
+          Swal.fire('Updated!', res.message, 'success').then(() => window.location.reload());
+        } else {
+          alert(res.message);
+          window.location.reload();
+        }
+      }
+    },
+    error: function(xhr) {
+      const msg = xhr.responseJSON ? xhr.responseJSON.message : 'Failed to update status.';
+      if (typeof Swal !== 'undefined') {
+        Swal.fire('Error', msg, 'error');
+      } else {
+        alert(msg);
+      }
+    }
+  });
+}
 
-    <div class="row g-3 mb-4 font-sm">
-      <div class="col-md-6">
-        <div class="p-3 border rounded">
-          <div class="fw-700 text-primary mb-2"><i class="fas fa-user me-1"></i> Customer Information</div>
-          <div><strong>Name:</strong> ${b.customerName}</div>
-          <div><strong>Email:</strong> ${b.email || 'customer@email.com'}</div>
-          <div><strong>Phone:</strong> ${b.phone || '+91 98765 43210'}</div>
-          <div><strong>License:</strong> ${b.license || 'MH-0120230012345'}</div>
+function approveCashPayment(bookingId) {
+  const csrfToken = $('meta[name="csrf-token"]').attr('content');
+
+  if (confirm('Approve cash payment for this booking?')) {
+    $.ajax({
+      url: `/admin/bookings/${bookingId}/approve-cash`,
+      method: 'POST',
+      data: { _token: csrfToken },
+      success: function(res) {
+        alert(res.message);
+        window.location.reload();
+      },
+      error: function(xhr) {
+        alert(xhr.responseJSON ? xhr.responseJSON.message : 'Error approving cash payment.');
+      }
+    });
+  }
+}
+
+function viewBookingDetails(bookingId) {
+  $.ajax({
+    url: `/admin/bookings/${bookingId}`,
+    method: 'GET',
+    success: function(res) {
+      if (!res.success || !res.booking) return;
+
+      const b = res.booking;
+      const c = b.customer || {};
+      const car = b.car || {};
+      const pLoc = b.pickup_location || {};
+      const dLoc = b.dropoff_location || {};
+      const p = b.payment || {};
+
+      const modalHtml = `
+        <div class="row align-items-center g-3 mb-4 p-3 bg-surface-2 rounded-card">
+          <div class="col-md-6">
+            <div class="font-xs text-muted">BOOKING REFERENCE</div>
+            <h4 class="fw-800 font-mono text-primary mb-0">${b.booking_number}</h4>
+            <span class="badge bg-primary-lighter text-primary mt-1">${b.booking_status}</span>
+          </div>
+          <div class="col-md-6 text-md-end">
+            <div class="font-xs text-muted">TOTAL RESERVATION COST</div>
+            <h3 class="fw-800 text-dark mb-0">₹${parseFloat(b.total_amount).toLocaleString()}</h3>
+            <span class="badge bg-light text-dark font-xs border">${p.payment_method || 'N/A'} (${b.payment_status})</span>
+          </div>
         </div>
-      </div>
-      <div class="col-md-6">
-        <div class="p-3 border rounded">
-          <div class="fw-700 text-primary mb-2"><i class="fas fa-car me-1"></i> Vehicle & Rental Terms</div>
-          <div><strong>Car Rented:</strong> ${b.carName}</div>
-          <div><strong>Pickup Location:</strong> ${b.pickupLoc}</div>
-          <div><strong>Dates:</strong> ${b.pickupDate} → ${b.returnDate} (${b.days} Days)</div>
+
+        <div class="row g-3 mb-4 font-sm">
+          <div class="col-md-6">
+            <div class="p-3 border rounded">
+              <div class="fw-700 text-primary mb-2"><i class="fas fa-user me-1"></i> Customer Information</div>
+              <div><strong>Name:</strong> ${c.first_name || ''} ${c.last_name || ''}</div>
+              <div><strong>Email:</strong> ${c.email || 'N/A'}</div>
+              <div><strong>Phone:</strong> ${c.phone || 'N/A'}</div>
+              <div><strong>License:</strong> ${c.dl_number || 'N/A'}</div>
+              <div><strong>Address:</strong> ${c.address || ''}, ${c.city || ''}</div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="p-3 border rounded">
+              <div class="fw-700 text-primary mb-2"><i class="fas fa-car me-1"></i> Vehicle & Rental Terms</div>
+              <div><strong>Car Rented:</strong> ${car.brand_name || ''} ${car.model_name || ''}</div>
+              <div><strong>Pickup Location:</strong> ${pLoc.name || 'Branch Pickup'}</div>
+              <div><strong>Drop-off Location:</strong> ${dLoc.name || 'Branch Dropoff'}</div>
+              <div><strong>Dates:</strong> ${b.pickup_date} → ${b.return_date} (${b.rental_days} Days)</div>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
 
-    <div class="bg-surface-2 p-3 rounded font-sm">
-      <div class="fw-700 mb-2 border-bottom pb-1">Price Breakdown</div>
-      <div class="d-flex justify-content-between py-1"><span>Daily Tariff (${b.days} days):</span><strong>₹${b.basePrice.toLocaleString()}</strong></div>
-      <div class="d-flex justify-content-between py-1"><span>Optional Add-ons:</span><strong>₹${b.extras.toLocaleString()}</strong></div>
-      <div class="d-flex justify-content-between py-1"><span>GST (18%):</span><strong>₹${b.tax.toLocaleString()}</strong></div>
-      <div class="d-flex justify-content-between py-1 text-danger"><span>Promo Discount:</span><strong>-₹${b.discount.toLocaleString()}</strong></div>
-      <div class="d-flex justify-content-between py-2 border-top fw-800 fs-5 text-primary"><span>Total Paid:</span><span>₹${b.total.toLocaleString()}</span></div>
-    </div>
-  `);
+        <div class="bg-surface-2 p-3 rounded font-sm">
+          <div class="fw-700 mb-2 border-bottom pb-1">Price Breakdown</div>
+          <div class="d-flex justify-content-between py-1"><span>Daily Tariff (${b.rental_days} days):</span><strong>₹${parseFloat(b.base_price).toLocaleString()}</strong></div>
+          <div class="d-flex justify-content-between py-1"><span>Optional Add-ons:</span><strong>₹${parseFloat(b.extras_amount).toLocaleString()}</strong></div>
+          <div class="d-flex justify-content-between py-1"><span>GST (18%):</span><strong>₹${parseFloat(b.tax_amount).toLocaleString()}</strong></div>
+          ${b.discount_amount > 0 ? `<div class="d-flex justify-content-between py-1 text-danger"><span>Promo Discount:</span><strong>-₹${parseFloat(b.discount_amount).toLocaleString()}</strong></div>` : ''}
+          <div class="d-flex justify-content-between py-2 border-top fw-800 fs-5 text-primary"><span>Total Amount:</span><span>₹${parseFloat(b.total_amount).toLocaleString()}</span></div>
+        </div>
+      `;
 
-  const modal = new bootstrap.Modal(document.getElementById('bookingDetailModal'));
-  modal.show();
+      $('#bookingModalBody').html(modalHtml);
+      const modal = new bootstrap.Modal(document.getElementById('bookingDetailModal'));
+      modal.show();
+    },
+    error: function() {
+      alert('Error fetching booking details.');
+    }
+  });
 }

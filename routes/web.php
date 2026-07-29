@@ -6,6 +6,10 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CarController;
+use App\Http\Controllers\BookingController;
+use App\Http\Controllers\CouponController;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\AdminBookingController;
 
 // Website Main Pages
 Route::get('/', [CarController::class, 'websiteIndex']);
@@ -28,20 +32,32 @@ Route::get('/offers', function () {
     return view('website.offers');
 });
 
-Route::get('/contact',[ContactController::class,'create']);
-Route::post('/ins_contact',[ContactController::class,'store']);
+Route::get('/contact', [ContactController::class, 'create']);
+Route::post('/ins_contact', [ContactController::class, 'store']);
 
 Route::get('/faq', function () {
     return view('website.faq');
 });
 
-Route::get('/booking', function () {
-    return view('website.booking');
-});
+// Booking Routes
+Route::get('/booking', [BookingController::class, 'showBookingPage']);
+Route::get('/booking/{car}', [BookingController::class, 'showBookingPage']);
+Route::post('/booking', [BookingController::class, 'store']);
+Route::post('/booking/calculate-price', [BookingController::class, 'calculatePrice']);
+Route::post('/booking/check-availability', [BookingController::class, 'checkAvailability']);
+Route::get('/booking/{booking_number}/success', [BookingController::class, 'success']);
 
-Route::get('/booking-success', function () {
-    return view('website.booking-success');
-});
+// Customer Dashboard & Booking Management
+Route::get('/my-bookings', [BookingController::class, 'myBookings']);
+Route::get('/my-bookings/{id}', [BookingController::class, 'showMyBooking']);
+Route::post('/booking/{id}/cancel', [BookingController::class, 'cancelBooking']);
+
+// Coupon API
+Route::post('/apply-coupon', [CouponController::class, 'apply']);
+
+// Payment API (Razorpay & Callback)
+Route::post('/payment/create-order', [PaymentController::class, 'createRazorpayOrder']);
+Route::post('/payment/callback', [PaymentController::class, 'callback']);
 
 // Policies
 Route::get('/privacy-policy', function () {
@@ -105,9 +121,12 @@ Route::prefix('admin')->group(function () {
     Route::post('/save-category', [CategoryController::class, 'store']);
     Route::get('/del-category/{id}', [CategoryController::class, 'destroy']);
 
-    Route::get('/bookings', function () {
-        return view('admin.bookings');
-    });
+    // Admin Bookings Management
+    Route::get('/bookings', [AdminBookingController::class, 'index']);
+    Route::get('/bookings/{id}', [AdminBookingController::class, 'show']);
+    Route::match(['POST', 'PATCH'], '/bookings/{id}/status', [AdminBookingController::class, 'updateStatus']);
+    Route::post('/bookings/{id}/approve-cash', [AdminBookingController::class, 'approveCash']);
+
     Route::get('/brands', function () {
         return view('admin.brands');
     });
@@ -144,4 +163,3 @@ Route::prefix('admin')->group(function () {
         return view('admin.settings');
     });
 });
-

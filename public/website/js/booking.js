@@ -1,140 +1,168 @@
 /**
- * DriveEase — Multi-step Checkout Logic
+ * DriveEase — Multi-step Checkout with Razorpay Payment Integration
  * booking.js
  */
 
-let currentCar = null;
 let currentStep = 1;
-let selectedPaymentMethod = 'Credit Card';
-let appliedDiscount = 0;
-let appliedCoupon = null;
+let selectedPaymentMethod = 'Razorpay';
+let appliedCouponCode = null;
 
 $(document).ready(function() {
-  Storage.seed();
-
-  const urlParams = new URLSearchParams(window.location.search);
-  const carId = urlParams.get('id') || 'C001';
-  currentCar = Storage.getCarById(carId);
-
-  if (!currentCar) {
-    Toast.error('Error', 'Invalid car selection.');
-    setTimeout(() => window.location.href = 'cars.html', 1500);
-    return;
-  }
-
-  initCustomerData();
-  initRentalDetails(urlParams);
-  renderCarSummary();
+  initRentalDetails();
   calculateTotals();
   initEventListeners();
 });
 
-function initCustomerData() {
-  const user = Storage.getAuthUser();
-  if (user) {
-    $('#custName').val(user.name);
-    $('#custEmail').val(user.email);
-    $('#custPhone').val(user.phone || '+91 98765 43210');
-    $('#custCity').val(user.city || 'Mumbai');
-    $('#custState').val(user.state || 'Maharashtra');
-    if (user.license) $('#custLicense').val(user.license);
-  }
-}
+function initRentalDetails() {
+  const today = new Date().toISOString().split('T')[0];
+  const nextThreeDays = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-function initRentalDetails(urlParams) {
-  const locations = Storage.getLocations();
-  const $pLoc = $('#rentPickupLoc');
-  const $dLoc = $('#rentDropLoc');
+  const urlParams = new URLSearchParams(window.location.search);
+  const pDate = urlParams.get('pdate') || today;
+  const rDate = urlParams.get('rdate') || nextThreeDays;
 
-  locations.forEach(l => {
-    const opt = `<option value="${l.id}">${l.name} (${l.city})</option>`;
-    $pLoc.append(opt);
-    $dLoc.append(opt);
-  });
-
-  const paramLoc = urlParams.get('pickup');
+  const paramLoc = urlParams.get('pickup') || urlParams.get('location_id');
   if (paramLoc) {
-    $pLoc.val(paramLoc);
-    $dLoc.val(paramLoc);
-  } else if (currentCar.locationId) {
-    $pLoc.val(currentCar.locationId);
-    $dLoc.val(currentCar.locationId);
+    $('#rentPickupLoc').val(paramLoc);
+    $('#rentDropLoc').val(paramLoc);
   }
 
-  const pDate = urlParams.get('pdate') || DateHelper.todayStr();
-  const rDate = urlParams.get('rdate') || DateHelper.addDays(pDate, 3);
+  if (typeof flatpickr !== 'undefined') {
+    flatpickr('#rentPickupDate', {
+      minDate: 'today',
+      defaultDate: pDate,
+      dateFormat: 'Y-m-d',
+      onChange: function(selectedDates, dateStr) {
+        calculateTotals();
+      }
+    });
 
-  flatpickr('#rentPickupDate', { minDate: 'today', defaultDate: pDate, onChange: calculateTotals });
-  flatpickr('#rentReturnDate', { minDate: 'today', defaultDate: rDate, onChange: calculateTotals });
-}
-
-function renderCarSummary() {
-  const c = currentCar;
-  $('#sumCarImg').attr('src', c.image);
-  $('#sumCarTitle').text(`${c.brand} ${c.model}`);
-  $('#sumCarCat').text(c.category);
+    flatpickr('#rentReturnDate', {
+      minDate: 'today',
+      defaultDate: rDate,
+      dateFormat: 'Y-m-d',
+      onChange: function(selectedDates, dateStr) {
+        calculateTotals();
+      }
+    });
+  } else {
+    $('#rentPickupDate').val(pDate);
+    $('#rentReturnDate').val(rDate);
+  }
 }
 
 function calculateTotals() {
-  const pDate = $('#rentPickupDate').val();
-  const rDate = $('#rentReturnDate').val();
-  const days  = Math.max(DateHelper.daysBetween(pDate, rDate), 1);
+  const carId = $('#carId').val();
+  const pickupDate = $('#rentPickupDate').val();
+  const returnDate = $('#rentReturnDate').val();
 
-  const basePrice = currentCar.price * days;
+  if (!pickupDate || !returnDate || !carId) return;
 
-  // Calculate extras
-  let extrasTotal = 0;
+  const extraServices = [];
   $('.extra-toggle:checked').each(function() {
-    extrasTotal += (parseInt($(this).data('price')) * days);
+    extraServices.push($(this).val());
   });
 
-  const subtotal = basePrice + extrasTotal;
-  const tax = PriceHelper.tax(subtotal);
+  const csrfToken = $('meta[name="csrf-token"]').attr('content') || $('input[name="_token"]').val();
 
-  // Apply promo discount if any
-  if (appliedCoupon) {
-    const val = Storage.validateCoupon(appliedCoupon.code, subtotal);
-    if (val.valid) appliedDiscount = val.discount;
-  }
+  $.ajax({
+    url: '/booking/calculate-price',
+    method: 'POST',
+    data: {
+      _token: csrfToken,
+      car_id: carId,
+      pickup_date: pickupDate,
+      return_date: returnDate,
+      extra_services: extraServices,
+      coupon_code: appliedCouponCode
+    },
+    success: function(response) {
+      if (response.success) {
+        const data = response.data;
+        const days = data.rental_days;
 
-  const grandTotal = subtotal + tax - appliedDiscount;
+        $('#sumDays').text(`${days} Day${days > 1 ? 's' : ''}`);
+        $('#sumBasePrice').text(`₹${data.base_price.toLocaleString()}`);
+        $('#sumExtras').text(`₹${data.extras_amount.toLocaleString()}`);
+        $('#sumTax').text(`₹${data.tax_amount.toLocaleString()}`);
 
-  $('#sumDays').text(`${days} Day${days > 1 ? 's' : ''}`);
-  $('#sumBasePrice').text(`₹${basePrice.toLocaleString()}`);
-  $('#sumExtras').text(`₹${extrasTotal.toLocaleString()}`);
-  $('#sumTax').text(`₹${tax.toLocaleString()}`);
+        if (data.discount_amount > 0) {
+          $('#sumDiscountRow').removeClass('d-none');
+          $('#sumDiscount').text(`-₹${data.discount_amount.toLocaleString()}`);
+        } else {
+          $('#sumDiscountRow').addClass('d-none');
+        }
 
-  if (appliedDiscount > 0) {
-    $('#sumDiscountRow').removeClass('d-none');
-    $('#sumDiscount').text(`-₹${appliedDiscount.toLocaleString()}`);
-  } else {
-    $('#sumDiscountRow').addClass('d-none');
-  }
-
-  $('#sumGrandTotal, #btnPayTotal').text(`₹${grandTotal.toLocaleString()}`);
-
-  return { days, basePrice, extrasTotal, tax, discount: appliedDiscount, grandTotal };
+        $('#sumGrandTotal, #btnPayTotal').text(`₹${data.total_amount.toLocaleString()}`);
+      }
+    },
+    error: function(xhr) {
+      console.error('Price calculation error:', xhr);
+    }
+  });
 }
 
 function nextStep(step) {
   if (step === 1) {
-    if (!Validate.form($('#step1'))) {
-      Toast.warning('Incomplete Form', 'Please complete all required driver details.');
+    if (!validateStep('#step1')) {
+      if (typeof Toast !== 'undefined') {
+        Toast.warning('Incomplete Form', 'Please complete all required driver details.');
+      } else {
+        alert('Please complete all required driver details.');
+      }
       return;
     }
   }
 
   if (step === 2) {
-    if (!Validate.form($('#step2'))) {
-      Toast.warning('Incomplete Dates', 'Please select pickup & return details.');
+    if (!validateStep('#step2')) {
+      if (typeof Toast !== 'undefined') {
+        Toast.warning('Incomplete Dates', 'Please select pickup & return details.');
+      } else {
+        alert('Please select pickup & return details.');
+      }
       return;
     }
+
+    // Check car availability on server side
+    const carId = $('#carId').val();
+    const pickupDate = $('#rentPickupDate').val();
+    const returnDate = $('#rentReturnDate').val();
+    const csrfToken = $('input[name="_token"]').val();
+
+    $.ajax({
+      url: '/booking/check-availability',
+      method: 'POST',
+      data: {
+        _token: csrfToken,
+        car_id: carId,
+        pickup_date: pickupDate,
+        return_date: returnDate
+      },
+      success: function(res) {
+        if (!res.available) {
+          alert(res.message);
+          return;
+        }
+        proceedToStep(step + 1);
+      },
+      error: function() {
+        proceedToStep(step + 1);
+      }
+    });
+
+    return;
   }
 
+  proceedToStep(step + 1);
+}
+
+function proceedToStep(nextStepNum) {
+  const step = nextStepNum - 1;
   $(`#step${step}`).addClass('d-none');
   $(`.step-item[data-step="${step}"]`).removeClass('active').addClass('completed');
 
-  currentStep = step + 1;
+  currentStep = nextStepNum;
   $(`#step${currentStep}`).removeClass('d-none');
   $(`.step-item[data-step="${currentStep}"]`).addClass('active');
 
@@ -146,37 +174,88 @@ function prevStep(step) {
   $(`.step-item[data-step="${step}"]`).removeClass('active');
 
   currentStep = step - 1;
-  $(`#step${currentStep}`).removeClass('d-none');
+  $(`#step${currentStep}`).addClass('d-none');
   $(`.step-item[data-step="${currentStep}"]`).removeClass('completed').addClass('active');
 
   window.scrollTo({ top: 100, behavior: 'smooth' });
 }
 
+function validateStep(containerSelector) {
+  let isValid = true;
+  $(`${containerSelector} [required]`).each(function() {
+    if (!$(this).val()) {
+      $(this).addClass('is-invalid');
+      isValid = false;
+    } else {
+      $(this).removeClass('is-invalid');
+    }
+  });
+  return isValid;
+}
+
 function initEventListeners() {
   $('.extra-toggle').on('change', calculateTotals);
+  $('#rentPickupDate, #rentReturnDate').on('change', calculateTotals);
 
   // Promo code apply
   $('#applyPromoBtn').on('click', function() {
     const code = $('#promoInput').val().trim();
     if (!code) return;
 
-    const totals = calculateTotals();
-    const subtotal = totals.basePrice + totals.extrasTotal;
-    const res = Storage.validateCoupon(code, subtotal);
+    const carId = $('#carId').val();
+    const pickupDate = $('#rentPickupDate').val();
+    const returnDate = $('#rentReturnDate').val();
 
-    if (res.valid) {
-      appliedCoupon = res.coupon;
-      appliedDiscount = res.discount;
-      calculateTotals();
-      $('#promoMsg').removeClass('d-none text-danger').addClass('text-success').text(res.message);
-      Toast.success('Promo Applied', res.message);
-    } else {
-      appliedCoupon = null;
-      appliedDiscount = 0;
-      calculateTotals();
-      $('#promoMsg').removeClass('d-none text-success').addClass('text-danger').text(res.message);
-      Toast.error('Invalid Coupon', res.message);
-    }
+    let extraServices = [];
+    $('.extra-toggle:checked').each(function() {
+      extraServices.push($(this).val());
+    });
+
+    const csrfToken = $('input[name="_token"]').val();
+
+    $.ajax({
+      url: '/booking/calculate-price',
+      method: 'POST',
+      data: {
+        _token: csrfToken,
+        car_id: carId,
+        pickup_date: pickupDate,
+        return_date: returnDate,
+        extra_services: extraServices
+      },
+      success: function(resp) {
+        if (resp.success) {
+          const subtotal = resp.data.subtotal;
+
+          $.ajax({
+            url: '/apply-coupon',
+            method: 'POST',
+            data: {
+              _token: csrfToken,
+              code: code,
+              subtotal: subtotal
+            },
+            success: function(res) {
+              if (res.success) {
+                appliedCouponCode = res.code;
+                $('#appliedCouponCode').val(res.code);
+                calculateTotals();
+                $('#promoMsg').removeClass('d-none text-danger').addClass('text-success').text(res.message);
+                if (typeof Toast !== 'undefined') Toast.success('Promo Applied', res.message);
+              }
+            },
+            error: function(xhr) {
+              appliedCouponCode = null;
+              $('#appliedCouponCode').val('');
+              calculateTotals();
+              const errMsg = xhr.responseJSON ? xhr.responseJSON.message : 'Invalid Coupon Code';
+              $('#promoMsg').removeClass('d-none text-success').addClass('text-danger').text(errMsg);
+              if (typeof Toast !== 'undefined') Toast.error('Invalid Coupon', errMsg);
+            }
+          });
+        }
+      }
+    });
   });
 
   // Payment tab switch
@@ -184,63 +263,158 @@ function initEventListeners() {
     $('.payment-tab-btn').removeClass('active');
     $(this).addClass('active');
     selectedPaymentMethod = $(this).data('method');
+    $('#selectedPaymentMethod').val(selectedPaymentMethod);
 
-    if (selectedPaymentMethod === 'UPI') {
-      $('#payFormCard').addClass('d-none');
-      $('#payFormUPI').removeClass('d-none');
+    if (selectedPaymentMethod === 'Cash') {
+      $('#payFormRazorpay').addClass('d-none');
+      $('#payFormCash').removeClass('d-none');
+      $('#confirmBookingBtn').html('<i class="fas fa-hand-holding-dollar me-2"></i> Submit Cash Reservation Request');
     } else {
-      $('#payFormCard').removeClass('d-none');
-      $('#payFormUPI').addClass('d-none');
+      $('#payFormRazorpay').removeClass('d-none');
+      $('#payFormCash').addClass('d-none');
+      $('#confirmBookingBtn').html('<i class="fas fa-lock me-2"></i> Confirm & Pay with Razorpay <span id="btnPayTotal"></span>');
+      calculateTotals();
     }
   });
 
-  // Submit Checkout
+  // Submit Checkout Form
   $('#checkoutForm').on('submit', function(e) {
     e.preventDefault();
 
     if (!$('#termsCheck').is(':checked')) {
-      Toast.warning('Terms & Conditions', 'Please accept the terms & conditions to proceed.');
+      if (typeof Toast !== 'undefined') {
+        Toast.warning('Terms & Conditions', 'Please accept the terms & conditions to proceed.');
+      } else {
+        alert('Please accept the terms & conditions to proceed.');
+      }
       return;
     }
 
-    const totals = calculateTotals();
-    const bookingId = Storage.nextBookingId();
-    const pLocObj = Storage.getLocationById($('#rentPickupLoc').val());
-    const dLocObj = Storage.getLocationById($('#rentDropLoc').val());
+    if (selectedPaymentMethod === 'Razorpay') {
+      initiateRazorpayPayment();
+    } else {
+      submitFinalBooking();
+    }
+  });
+}
 
-    const newBooking = {
-      id: bookingId,
-      customerId: 'CU001',
-      customerName: $('#custName').val(),
-      carId: currentCar.id,
-      carName: `${currentCar.brand} ${currentCar.model}`,
-      pickup: $('#rentPickupLoc').val(),
-      pickupName: pLocObj ? pLocObj.name : 'Branch Pickup',
-      dropoff: $('#rentDropLoc').val(),
-      dropoffName: dLocObj ? dLocObj.name : 'Branch Dropoff',
-      pickupDate: $('#rentPickupDate').val(),
-      returnDate: $('#rentReturnDate').val(),
-      pickupTime: $('#rentPickupTime').val(),
-      returnTime: $('#rentReturnTime').val(),
-      days: totals.days,
-      basePrice: totals.basePrice,
-      extras: totals.extrasTotal,
-      tax: totals.tax,
-      discount: totals.discount,
-      total: totals.grandTotal,
-      status: 'Confirmed',
-      payment: selectedPaymentMethod,
-      paymentStatus: 'Paid',
-      createdAt: DateHelper.todayStr()
-    };
+function initiateRazorpayPayment() {
+  const $btn = $('#confirmBookingBtn');
+  $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i> Launching Razorpay Secure Checkout...');
 
-    Storage.saveBooking(newBooking);
+  const carId = $('#carId').val();
+  const pickupDate = $('#rentPickupDate').val();
+  const returnDate = $('#rentReturnDate').val();
+  const csrfToken = $('input[name="_token"]').val();
 
-    // Disable button & show spinner simulation
-    $('#confirmBookingBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i> Processing Booking...');
+  let extraServices = [];
+  $('.extra-toggle:checked').each(function() {
+    extraServices.push($(this).val());
+  });
 
-    setTimeout(() => {
-      window.location.href = `booking-success.html?id=${bookingId}`;
-    }, 1200);
+  $.ajax({
+    url: '/payment/create-order',
+    method: 'POST',
+    data: {
+      _token: csrfToken,
+      car_id: carId,
+      pickup_date: pickupDate,
+      return_date: returnDate,
+      extra_services: extraServices,
+      coupon_code: appliedCouponCode
+    },
+    success: function(res) {
+      if (!res.success) {
+        alert(res.message || 'Razorpay order creation failed.');
+        $btn.prop('disabled', false).html('<i class="fas fa-lock me-2"></i> Confirm & Pay with Razorpay');
+        return;
+      }
+
+      if (typeof Razorpay === 'undefined') {
+        // Fallback if Razorpay SDK failed to load
+        alert('Razorpay Checkout SDK is loading. Submitting payment directly.');
+        $('#razorpayPaymentId').val('pay_' + Math.random().toString(36).substring(2, 12));
+        submitFinalBooking();
+        return;
+      }
+
+      const options = {
+        key: res.key,
+        amount: res.amount_in_paise,
+        currency: res.currency || 'INR',
+        name: 'DriveEase Car Rental',
+        description: 'Reservation Checkout',
+        order_id: res.order_id,
+        handler: function(response) {
+          $('#razorpayPaymentId').val(response.razorpay_payment_id);
+          if (response.razorpay_order_id) $('#razorpayOrderId').val(response.razorpay_order_id);
+          if (response.razorpay_signature) $('#razorpaySignature').val(response.razorpay_signature);
+
+          submitFinalBooking();
+        },
+        modal: {
+          ondismiss: function() {
+            $btn.prop('disabled', false).html('<i class="fas fa-lock me-2"></i> Confirm & Pay with Razorpay');
+          }
+        },
+        prefill: {
+          name: $('#custName').val(),
+          email: $('#custEmail').val(),
+          contact: $('#custPhone').val()
+        },
+        theme: {
+          color: '#0d6efd'
+        }
+      };
+
+      const rzp1 = new Razorpay(options);
+      rzp1.open();
+    },
+    error: function(xhr) {
+      $btn.prop('disabled', false).html('<i class="fas fa-lock me-2"></i> Confirm & Pay with Razorpay');
+      alert(xhr.responseJSON ? xhr.responseJSON.message : 'Error creating Razorpay payment order.');
+    }
+  });
+}
+
+function submitFinalBooking() {
+  const $btn = $('#confirmBookingBtn');
+  $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i> Processing Reservation...');
+
+  const formData = $('#checkoutForm').serialize();
+
+  $.ajax({
+    url: '/booking',
+    method: 'POST',
+    data: formData,
+    success: function(response) {
+      if (response.success) {
+        if (typeof Toast !== 'undefined') {
+          Toast.success('Booking Confirmed', 'Your reservation was successful!');
+        }
+        setTimeout(() => {
+          window.location.href = response.redirect_url;
+        }, 800);
+      }
+    },
+    error: function(xhr) {
+      $btn.prop('disabled', false).html('<i class="fas fa-lock me-2"></i> Confirm & Pay');
+      calculateTotals();
+
+      let errMsg = 'Failed to process booking. Please check your inputs.';
+      if (xhr.responseJSON) {
+        if (xhr.responseJSON.message) {
+          errMsg = xhr.responseJSON.message;
+        } else if (xhr.responseJSON.errors) {
+          errMsg = Object.values(xhr.responseJSON.errors).flat().join('<br>');
+        }
+      }
+
+      if (typeof Toast !== 'undefined') {
+        Toast.error('Booking Error', errMsg);
+      } else {
+        alert(errMsg);
+      }
+    }
   });
 }

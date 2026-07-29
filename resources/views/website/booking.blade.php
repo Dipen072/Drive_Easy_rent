@@ -32,7 +32,14 @@
       
       <!-- LEFT: MULTI-STEP FORM -->
       <div class="col-lg-8">
-        <form id="checkoutForm" novalidate>
+        <form id="checkoutForm" action="{{ url('/booking') }}" method="POST" novalidate>
+          @csrf
+          <input type="hidden" name="car_id" id="carId" value="{{ $car->id }}">
+          <input type="hidden" name="payment_method" id="selectedPaymentMethod" value="Razorpay">
+          <input type="hidden" name="coupon_code" id="appliedCouponCode" value="">
+          <input type="hidden" name="razorpay_payment_id" id="razorpayPaymentId" value="">
+          <input type="hidden" name="razorpay_order_id" id="razorpayOrderId" value="">
+          <input type="hidden" name="razorpay_signature" id="razorpaySignature" value="">
           
           <!-- STEP 1: CUSTOMER INFORMATION -->
           <div class="step-content bg-surface p-4 rounded-card border shadow-xs" id="step1">
@@ -40,35 +47,35 @@
             <div class="row g-3">
               <div class="col-md-6">
                 <label class="form-label">Full Name *</label>
-                <input type="text" class="form-control" id="custName" required placeholder="e.g. Arjun Sharma">
+                <input type="text" class="form-control" name="full_name" id="custName" required placeholder="e.g. Arjun Sharma" value="{{ old('full_name', $customer ? ($customer->first_name . ' ' . $customer->last_name) : '') }}">
               </div>
               <div class="col-md-6">
                 <label class="form-label">Email Address *</label>
-                <input type="email" class="form-control" id="custEmail" required placeholder="arjun@example.com">
+                <input type="email" class="form-control" name="email" id="custEmail" required placeholder="arjun@example.com" value="{{ old('email', $customer ? $customer->email : '') }}">
               </div>
               <div class="col-md-6">
                 <label class="form-label">Phone Number *</label>
-                <input type="tel" class="form-control" id="custPhone" required placeholder="+91 98765 43210">
+                <input type="tel" class="form-control" name="phone" id="custPhone" required placeholder="+91 98765 43210" value="{{ old('phone', $customer ? $customer->phone : '') }}">
               </div>
               <div class="col-md-6">
                 <label class="form-label">Driving License Number *</label>
-                <input type="text" class="form-control" id="custLicense" required placeholder="MH-0120230012345">
+                <input type="text" class="form-control" name="driving_license" id="custLicense" required placeholder="MH-0120230012345" value="{{ old('driving_license', $customer ? $customer->dl_number : '') }}">
               </div>
               <div class="col-12">
                 <label class="form-label">Street Address *</label>
-                <input type="text" class="form-control" id="custAddress" required placeholder="Apartment / House / Street">
+                <input type="text" class="form-control" name="address" id="custAddress" required placeholder="Apartment / House / Street" value="{{ old('address', $customer ? $customer->address : '') }}">
               </div>
               <div class="col-md-4">
                 <label class="form-label">City *</label>
-                <input type="text" class="form-control" id="custCity" required placeholder="Mumbai">
+                <input type="text" class="form-control" name="city" id="custCity" required placeholder="Mumbai" value="{{ old('city', $customer ? $customer->city : '') }}">
               </div>
               <div class="col-md-4">
                 <label class="form-label">State *</label>
-                <input type="text" class="form-control" id="custState" required placeholder="Maharashtra">
+                <input type="text" class="form-control" name="state" id="custState" required placeholder="Maharashtra" value="{{ old('state', $customer ? $customer->state : '') }}">
               </div>
               <div class="col-md-4">
                 <label class="form-label">ZIP / Postal Code *</label>
-                <input type="text" class="form-control" id="custZip" required placeholder="400001">
+                <input type="text" class="form-control" name="zip" id="custZip" required placeholder="400001" value="{{ old('zip', $customer ? $customer->zip_code : '') }}">
               </div>
             </div>
             <div class="d-flex justify-content-end mt-4">
@@ -84,23 +91,31 @@
             <div class="row g-3">
               <div class="col-md-6">
                 <label class="form-label">Pickup Branch *</label>
-                <select id="rentPickupLoc" class="form-select" required></select>
+                <select id="rentPickupLoc" name="pickup_location_id" class="form-select" required>
+                  @foreach($locations as $loc)
+                    <option value="{{ $loc->id }}">{{ $loc->name }} ({{ $loc->city }})</option>
+                  @endforeach
+                </select>
               </div>
               <div class="col-md-6">
                 <label class="form-label">Drop-off Branch *</label>
-                <select id="rentDropLoc" class="form-select" required></select>
+                <select id="rentDropLoc" name="dropoff_location_id" class="form-select" required>
+                  @foreach($locations as $loc)
+                    <option value="{{ $loc->id }}">{{ $loc->name }} ({{ $loc->city }})</option>
+                  @endforeach
+                </select>
               </div>
               <div class="col-md-6">
                 <label class="form-label">Pickup Date *</label>
-                <input type="text" class="form-control" id="rentPickupDate" required readonly>
+                <input type="text" class="form-control" name="pickup_date" id="rentPickupDate" required readonly>
               </div>
               <div class="col-md-6">
                 <label class="form-label">Return Date *</label>
-                <input type="text" class="form-control" id="rentReturnDate" required readonly>
+                <input type="text" class="form-control" name="return_date" id="rentReturnDate" required readonly>
               </div>
               <div class="col-md-6">
                 <label class="form-label">Pickup Time *</label>
-                <select class="form-select" id="rentPickupTime">
+                <select class="form-select" name="pickup_time" id="rentPickupTime">
                   <option value="09:00">09:00 AM</option>
                   <option value="10:00" selected>10:00 AM</option>
                   <option value="11:00">11:00 AM</option>
@@ -110,7 +125,7 @@
               </div>
               <div class="col-md-6">
                 <label class="form-label">Return Time *</label>
-                <select class="form-select" id="rentReturnTime">
+                <select class="form-select" name="return_time" id="rentReturnTime">
                   <option value="09:00">09:00 AM</option>
                   <option value="10:00" selected>10:00 AM</option>
                   <option value="11:00">11:00 AM</option>
@@ -130,69 +145,23 @@
             <h5 class="fw-700 font-heading mb-3"><i class="fas fa-plus-circle text-primary me-2"></i>Step 3: Select Optional Add-ons</h5>
             
             <div class="d-flex flex-column gap-3">
+              @foreach($extraServices as $extra)
               <div class="p-3 border rounded d-flex align-items-center justify-content-between">
                 <div class="d-flex align-items-center gap-3">
-                  <i class="fas fa-shield-halved text-success fs-3"></i>
+                  <i class="{{ $extra->icon_class ?? 'fas fa-shield-halved' }} text-primary fs-3"></i>
                   <div>
-                    <div class="fw-700 font-sm">Full Comprehensive Insurance</div>
-                    <div class="text-muted font-xs">Zero excess coverage for accidental damages & theft protection</div>
+                    <div class="fw-700 font-sm">{{ $extra->name }}</div>
+                    <div class="text-muted font-xs">{{ $extra->description }}</div>
                   </div>
                 </div>
                 <div class="d-flex align-items-center gap-3">
-                  <span class="fw-700 text-primary">₹500 / day</span>
+                  <span class="fw-700 text-primary">₹{{ number_format($extra->price_per_day, 0) }} / day</span>
                   <div class="form-check form-switch">
-                    <input class="form-check-input extra-toggle" type="checkbox" data-name="Insurance" data-price="500" id="extraIns">
+                    <input class="form-check-input extra-toggle" type="checkbox" name="extra_services[]" value="{{ $extra->id }}" data-name="{{ $extra->name }}" data-price="{{ $extra->price_per_day }}" id="extra_{{ $extra->id }}">
                   </div>
                 </div>
               </div>
-
-              <div class="p-3 border rounded d-flex align-items-center justify-content-between">
-                <div class="d-flex align-items-center gap-3">
-                  <i class="fas fa-baby-carriage text-warning fs-3"></i>
-                  <div>
-                    <div class="fw-700 font-sm">Child Safety Seat</div>
-                    <div class="text-muted font-xs">Suitable for infants and toddlers up to 4 years</div>
-                  </div>
-                </div>
-                <div class="d-flex align-items-center gap-3">
-                  <span class="fw-700 text-primary">₹300 / day</span>
-                  <div class="form-check form-switch">
-                    <input class="form-check-input extra-toggle" type="checkbox" data-name="Child Seat" data-price="300" id="extraSeat">
-                  </div>
-                </div>
-              </div>
-
-              <div class="p-3 border rounded d-flex align-items-center justify-content-between">
-                <div class="d-flex align-items-center gap-3">
-                  <i class="fas fa-user-plus text-info fs-3"></i>
-                  <div>
-                    <div class="fw-700 font-sm">Additional Driver Permission</div>
-                    <div class="text-muted font-xs">Allow second driver to legally operate the vehicle</div>
-                  </div>
-                </div>
-                <div class="d-flex align-items-center gap-3">
-                  <span class="fw-700 text-primary">₹400 / day</span>
-                  <div class="form-check form-switch">
-                    <input class="form-check-input extra-toggle" type="checkbox" data-name="Additional Driver" data-price="400" id="extraDriver">
-                  </div>
-                </div>
-              </div>
-
-              <div class="p-3 border rounded d-flex align-items-center justify-content-between">
-                <div class="d-flex align-items-center gap-3">
-                  <i class="fas fa-wifi text-primary fs-3"></i>
-                  <div>
-                    <div class="fw-700 font-sm">Portable Wi-Fi Hotspot</div>
-                    <div class="text-muted font-xs">High-speed 4G data coverage for up to 5 devices</div>
-                  </div>
-                </div>
-                <div class="d-flex align-items-center gap-3">
-                  <span class="fw-700 text-primary">₹250 / day</span>
-                  <div class="form-check form-switch">
-                    <input class="form-check-input extra-toggle" type="checkbox" data-name="Wi-Fi Hotspot" data-price="250" id="extraWifi">
-                  </div>
-                </div>
-              </div>
+              @endforeach
             </div>
 
             <div class="d-flex justify-content-between mt-4">
@@ -205,56 +174,47 @@
           <div class="step-content bg-surface p-4 rounded-card border shadow-xs d-none" id="step4">
             <h5 class="fw-700 font-heading mb-3"><i class="fas fa-credit-card text-primary me-2"></i>Step 4: Select Payment Method</h5>
             
-            <div class="row g-2 mb-4">
-              <div class="col-6 col-md-3">
-                <div class="payment-tab-btn active" data-method="Credit Card">
-                  <i class="fas fa-credit-card fs-5 text-primary"></i> Card
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <div class="payment-tab-btn active p-3 border rounded-3 text-center cursor-pointer h-100" data-method="Razorpay">
+                  <div class="d-flex align-items-center justify-content-center gap-2 mb-2">
+                    <i class="fas fa-bolt text-primary fs-4"></i>
+                    <h6 class="fw-700 mb-0">Razorpay Online Payment</h6>
+                  </div>
+                  <p class="font-xs text-muted mb-0">Instant Payment via UPI, GPay, Credit/Debit Cards, NetBanking & Wallets</p>
                 </div>
               </div>
-              <div class="col-6 col-md-3">
-                <div class="payment-tab-btn" data-method="UPI">
-                  <i class="fas fa-mobile-alt fs-5 text-success"></i> UPI / QR
-                </div>
-              </div>
-              <div class="col-6 col-md-3">
-                <div class="payment-tab-btn" data-method="PayPal">
-                  <i class="fab fa-paypal fs-5 text-info"></i> PayPal
-                </div>
-              </div>
-              <div class="col-6 col-md-3">
-                <div class="payment-tab-btn" data-method="Cash">
-                  <i class="fas fa-money-bill-wave fs-5 text-warning"></i> Cash
-                </div>
-              </div>
-            </div>
-
-            <!-- Card Form UI -->
-            <div id="payFormCard" class="p-3 border rounded bg-surface-2 mb-3">
-              <div class="mb-3">
-                <label class="form-label font-sm">Cardholder Name</label>
-                <input type="text" class="form-control form-control-sm" placeholder="e.g. Arjun Sharma">
-              </div>
-              <div class="mb-3">
-                <label class="form-label font-sm">Card Number</label>
-                <input type="text" class="form-control form-control-sm" placeholder="4532 •••• •••• 8921">
-              </div>
-              <div class="row g-2">
-                <div class="col-6">
-                  <label class="form-label font-sm">Expiry Date</label>
-                  <input type="text" class="form-control form-control-sm" placeholder="MM / YY">
-                </div>
-                <div class="col-6">
-                  <label class="form-label font-sm">CVV</label>
-                  <input type="password" class="form-control form-control-sm" maxlength="4" placeholder="•••">
+              <div class="col-md-6">
+                <div class="payment-tab-btn p-3 border rounded-3 text-center cursor-pointer h-100" data-method="Cash">
+                  <div class="d-flex align-items-center justify-content-center gap-2 mb-2">
+                    <i class="fas fa-money-bill-wave text-warning fs-4"></i>
+                    <h6 class="fw-700 mb-0">Pay Cash at Pickup</h6>
+                  </div>
+                  <p class="font-xs text-muted mb-0">Pay cash directly at the pickup branch upon key handover (Subject to Admin Approval)</p>
                 </div>
               </div>
             </div>
 
-            <!-- UPI UI -->
-            <div id="payFormUPI" class="p-3 border rounded bg-surface-2 mb-3 d-none text-center">
-              <i class="fas fa-qrcode fs-1 text-primary mb-2"></i>
-              <p class="font-sm text-secondary mb-1">Scan or Enter VPA (Google Pay / PhonePe / Paytm)</p>
-              <input type="text" class="form-control form-control-sm mx-auto" style="max-width:300px;" placeholder="username@upi">
+            <!-- Razorpay Notice -->
+            <div id="payFormRazorpay" class="p-3 border rounded-3 bg-primary-lighter border-primary mb-4">
+              <div class="d-flex align-items-center gap-3">
+                <i class="fas fa-shield-cat fs-2 text-primary"></i>
+                <div>
+                  <div class="fw-700 text-primary font-sm">Secure Razorpay Gateway Activated</div>
+                  <div class="font-xs text-secondary">Clicking <strong>Confirm & Pay with Razorpay</strong> will open the secure payment checkout window to complete your reservation.</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Cash Notice -->
+            <div id="payFormCash" class="p-3 border rounded-3 bg-warning-light border-warning mb-4 d-none">
+              <div class="d-flex align-items-center gap-3">
+                <i class="fas fa-hand-holding-dollar fs-2 text-warning"></i>
+                <div>
+                  <div class="fw-700 text-dark font-sm">Offline Cash Reservation</div>
+                  <div class="font-xs text-secondary">Your booking request will be submitted as <strong>Pending</strong> for admin verification. You can pay cash at pickup.</div>
+                </div>
+              </div>
             </div>
 
             <div class="form-check mb-4">
@@ -267,7 +227,7 @@
             <div class="d-flex justify-content-between">
               <button type="button" class="btn btn-outline-secondary" onclick="prevStep(4)"><i class="fas fa-arrow-left me-1"></i> Back</button>
               <button type="submit" class="btn btn-success btn-lg-brand fw-700" id="confirmBookingBtn">
-                <i class="fas fa-lock me-2"></i> Confirm & Pay <span id="btnPayTotal">₹0</span>
+                <i class="fas fa-lock me-2"></i> Confirm & Pay with Razorpay <span id="btnPayTotal">₹0</span>
               </button>
             </div>
           </div>
@@ -282,20 +242,20 @@
           
           <!-- Car Selected Preview -->
           <div class="d-flex gap-3 align-items-center mb-3 pb-3 border-bottom">
-            <img src="" id="sumCarImg" class="rounded" style="width:90px;height:60px;object-fit:cover;">
+            <img src="{{ asset($car->image) }}" id="sumCarImg" class="rounded" style="width:90px;height:60px;object-fit:cover;" alt="{{ $car->brand_name }} {{ $car->model_name }}">
             <div>
-              <h6 class="fw-700 font-sm mb-1" id="sumCarTitle">Selected Car</h6>
-              <span class="badge bg-primary-lighter text-primary font-xs" id="sumCarCat">Category</span>
+              <h6 class="fw-700 font-sm mb-1" id="sumCarTitle">{{ $car->brand_name }} {{ $car->model_name }}</h6>
+              <span class="badge bg-primary-lighter text-primary font-xs" id="sumCarCat">{{ $car->category->category_name ?? 'Vehicle' }}</span>
             </div>
           </div>
 
           <div class="price-row">
             <span class="label">Rental Duration</span>
-            <span class="fw-600" id="sumDays">0 Days</span>
+            <span class="fw-600" id="sumDays">1 Day</span>
           </div>
           <div class="price-row">
             <span class="label">Base Vehicle Rate</span>
-            <span class="fw-600" id="sumBasePrice">₹0</span>
+            <span class="fw-600" id="sumBasePrice">₹{{ number_format($car->rate_per_day) }}</span>
           </div>
           <div class="price-row">
             <span class="label">Extra Services</span>
@@ -333,8 +293,14 @@
 </section>
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="{{url('website/js/data.js')}}"></script>
-<script src="{{url('website/js/storage.js')}}"></script>
-<script src="{{url('website/js/ui.js')}}"></script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+  window.carData = {
+    id: {{ $car->id }},
+    rate_per_day: {{ $car->rate_per_day }},
+    brand_name: "{{ $car->brand_name }}",
+    model_name: "{{ $car->model_name }}"
+  };
+</script>
 <script src="{{url('website/js/booking.js')}}"></script>
 @endsection

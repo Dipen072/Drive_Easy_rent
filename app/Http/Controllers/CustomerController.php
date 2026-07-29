@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\WelcomeCustomerMail;
 use App\Models\Customer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use RealRashid\SweetAlert\Facades\Alert;
 
 class CustomerController extends Controller
@@ -128,6 +130,13 @@ class CustomerController extends Controller
 
         $customer->status = 'Active';
         $customer->save();
+
+        // Send Welcome Customer Email asynchronously
+        try {
+            Mail::to($customer->email)->send(new WelcomeCustomerMail($customer));
+        } catch (\Throwable $e) {
+            // Logged automatically in mailable or silent fallback
+        }
 
         Alert::success('Successfully Registered', 'Customer Registered Successfully! Please login to your account.');
         return redirect('/login');

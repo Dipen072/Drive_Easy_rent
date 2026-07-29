@@ -1,6 +1,8 @@
 @extends('admin.layout.structure')
 
 @section('content')
+<meta name="csrf-token" content="{{ csrf_token() }}">
+
 <div class="admin-page-content">
   <div class="admin-page-header">
     <div>
@@ -24,17 +26,86 @@
       <div class="admin-search-bar">
         <div class="admin-search-input">
           <i class="fas fa-search"></i>
-          <input type="text" class="form-control" id="bookingSearchInput" placeholder="Search ID, customer, car...">
+          <input type="text" class="form-control" id="bookingSearchInput" placeholder="Search ID, booking #, customer, car...">
         </div>
       </div>
     </div>
     <div class="admin-table-wrapper">
       <table class="table-brand">
         <thead>
-          <tr><th>Booking ID</th><th>Customer</th><th>Car</th><th>Pickup</th><th>Return</th><th>Total</th><th>Status</th><th>Quick Actions</th><th>Details</th></tr>
+          <tr>
+            <th>Booking #</th>
+            <th>Customer</th>
+            <th>Car</th>
+            <th>Pickup</th>
+            <th>Return</th>
+            <th>Rental Days</th>
+            <th>Total Amount</th>
+            <th>Payment</th>
+            <th>Status</th>
+            <th>Quick Actions</th>
+            <th>Details</th>
+          </tr>
         </thead>
         <tbody id="adminBookingsTableBody">
-          <!-- Rendered by JS -->
+          @forelse($bookings as $b)
+          <tr data-status="{{ $b->booking_status }}" data-search="{{ strtolower($b->booking_number . ' ' . $b->customer->first_name . ' ' . $b->customer->last_name . ' ' . $b->customer->phone . ' ' . $b->car->brand_name . ' ' . $b->car->model_name) }}">
+            <td class="fw-700 font-mono text-primary">{{ $b->booking_number }}</td>
+            <td>
+              <div class="fw-600">{{ $b->customer->first_name }} {{ $b->customer->last_name }}</div>
+              <div class="font-xs text-muted">{{ $b->customer->phone }}</div>
+            </td>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <img src="{{ asset($b->car->image) }}" class="rounded" style="width:45px;height:30px;object-fit:cover;">
+                <span>{{ $b->car->brand_name }} {{ $b->car->model_name }}</span>
+              </div>
+            </td>
+            <td class="font-sm">
+              <div>{{ $b->pickupLocation->name ?? 'Pickup' }}</div>
+              <div class="font-xs text-muted">{{ \Carbon\Carbon::parse($b->pickup_date)->format('d M Y') }}</div>
+            </td>
+            <td class="font-sm">
+              <div>{{ $b->dropoffLocation->name ?? 'Dropoff' }}</div>
+              <div class="font-xs text-muted">{{ \Carbon\Carbon::parse($b->return_date)->format('d M Y') }}</div>
+            </td>
+            <td class="fw-600 text-center">{{ $b->rental_days }} Days</td>
+            <td class="fw-700 text-primary">₹{{ number_format($b->total_amount, 2) }}</td>
+            <td>
+              <span class="badge bg-{{ $b->payment_status === 'Paid' ? 'success' : 'warning' }}-light text-{{ $b->payment_status === 'Paid' ? 'success' : 'warning' }} font-xs fw-700">
+                {{ $b->payment_status }} ({{ $b->payment->payment_method ?? 'N/A' }})
+              </span>
+            </td>
+            <td>
+              <span class="badge bg-{{ $b->booking_status === 'Confirmed' ? 'success' : ($b->booking_status === 'Active' ? 'primary' : ($b->booking_status === 'Completed' ? 'secondary' : ($b->booking_status === 'Cancelled' ? 'danger' : 'warning'))) }}-light text-{{ $b->booking_status === 'Confirmed' ? 'success' : ($b->booking_status === 'Active' ? 'primary' : ($b->booking_status === 'Completed' ? 'secondary' : ($b->booking_status === 'Cancelled' ? 'danger' : 'warning'))) }} font-xs fw-700">
+                {{ $b->booking_status }}
+              </span>
+            </td>
+            <td>
+              <div class="d-flex gap-1">
+                @if($b->booking_status === 'Pending')
+                  <button class="btn btn-sm btn-success" onclick="updateAdminStatus({{ $b->id }}, 'Confirmed')" title="Approve Reservation"><i class="fas fa-check"></i> Approve</button>
+                  <button class="btn btn-sm btn-outline-danger" onclick="updateAdminStatus({{ $b->id }}, 'Cancelled')" title="Reject Reservation"><i class="fas fa-xmark"></i> Reject</button>
+                  @if($b->payment && $b->payment->payment_method === 'Cash')
+                  <button class="btn btn-sm btn-warning text-dark" onclick="approveCashPayment({{ $b->id }})" title="Approve Cash Payment"><i class="fas fa-money-bill"></i> Cash</button>
+                  @endif
+                @elseif($b->booking_status === 'Confirmed')
+                  <button class="btn btn-sm btn-primary" onclick="updateAdminStatus({{ $b->id }}, 'Active')" title="Mark Trip Active / Key Handover"><i class="fas fa-key"></i> Active</button>
+                  <button class="btn btn-sm btn-outline-danger" onclick="updateAdminStatus({{ $b->id }}, 'Cancelled')"><i class="fas fa-ban"></i> Cancel</button>
+                @elseif($b->booking_status === 'Active')
+                  <button class="btn btn-sm btn-info text-white" onclick="updateAdminStatus({{ $b->id }}, 'Completed')" title="Mark Vehicle Returned / Completed"><i class="fas fa-flag-checkered"></i> Complete</button>
+                @else
+                  <span class="text-muted font-xs">No Actions</span>
+                @endif
+              </div>
+            </td>
+            <td>
+              <button class="btn btn-sm btn-outline-secondary" onclick="viewBookingDetails({{ $b->id }})"><i class="fas fa-eye"></i> Details</button>
+            </td>
+          </tr>
+          @empty
+          <tr><td colspan="11" class="text-center p-4 text-muted">No reservations found in database.</td></tr>
+          @endforelse
         </tbody>
       </table>
     </div>

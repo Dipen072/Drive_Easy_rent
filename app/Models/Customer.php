@@ -32,4 +32,9 @@ class Customer extends Model
     protected $hidden = [
         'password',
     ];
+
+    public function bookings()
+    {
+        return $this->hasMany(Booking::class, 'customer_id');
+    }
 }
