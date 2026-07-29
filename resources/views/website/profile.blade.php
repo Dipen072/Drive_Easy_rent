@@ -47,7 +47,18 @@
 
       <!-- PROFILE CARD -->
       <div class="bg-surface p-4 p-sm-5 rounded-card border shadow-xs mb-4">
-        <form id="profileForm">
+        @if($errors->any())
+          <div class="alert alert-danger mb-4">
+            <ul class="mb-0 font-sm">
+              @foreach($errors->all() as $error)
+                <li>{{ $error }}</li>
+              @endforeach
+            </ul>
+          </div>
+        @endif
+
+        <form action="{{ url('/update-profile') }}" method="POST" enctype="multipart/form-data" id="profileForm">
+          @csrf
           
           <!-- 👤 1. BASIC DETAILS -->
           <div class="mb-5">
@@ -57,30 +68,34 @@
               <img src="{{ $customer->profile_picture ? url($customer->profile_picture) : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80' }}" id="profileAvatarPreview" class="profile-avatar-xl">
               <div>
                 <h5 class="fw-700 mb-1">{{ $customer->first_name }} {{ $customer->last_name }}</h5>
-                <div class="font-xs text-muted">Registered Email: {{ $customer->email }}</div>
+                <div class="font-xs text-muted mb-2">Registered Email: {{ $customer->email }}</div>
+                <label class="btn btn-sm btn-outline-primary fw-600 cursor-pointer">
+                  <i class="fas fa-camera me-1"></i> Change Photo
+                  <input type="file" name="profile_picture" accept="image/*" class="d-none" onchange="if(this.files[0]){ document.getElementById('profileAvatarPreview').src = URL.createObjectURL(this.files[0]); }">
+                </label>
               </div>
             </div>
 
             <div class="row g-3">
               <div class="col-md-6">
-                <label class="form-label font-sm fw-600">First Name</label>
-                <input type="text" class="form-control" readonly value="{{ $customer->first_name }}">
+                <label class="form-label font-sm fw-600">First Name <span class="text-danger">*</span></label>
+                <input type="text" name="first_name" class="form-control" required value="{{ old('first_name', $customer->first_name) }}">
               </div>
               <div class="col-md-6">
-                <label class="form-label font-sm fw-600">Last Name</label>
-                <input type="text" class="form-control" readonly value="{{ $customer->last_name }}">
+                <label class="form-label font-sm fw-600">Last Name <span class="text-danger">*</span></label>
+                <input type="text" name="last_name" class="form-control" required value="{{ old('last_name', $customer->last_name) }}">
               </div>
               <div class="col-md-6">
-                <label class="form-label font-sm fw-600">Email Address</label>
-                <input type="email" class="form-control" readonly value="{{ $customer->email }}">
+                <label class="form-label font-sm fw-600">Email Address <span class="text-danger">*</span></label>
+                <input type="email" name="email" class="form-control" required value="{{ old('email', $customer->email) }}">
               </div>
               <div class="col-md-6">
-                <label class="form-label font-sm fw-600">Mobile Number</label>
-                <input type="tel" class="form-control" readonly value="{{ $customer->phone }}">
+                <label class="form-label font-sm fw-600">Mobile Number <span class="text-danger">*</span></label>
+                <input type="tel" name="phone" class="form-control" required value="{{ old('phone', $customer->phone) }}">
               </div>
               <div class="col-md-6">
                 <label class="form-label font-sm fw-600">Date of Birth</label>
-                <input type="text" class="form-control" readonly value="{{ $customer->dob ?? 'N/A' }}">
+                <input type="date" name="dob" class="form-control" value="{{ old('dob', $customer->dob) }}">
               </div>
             </div>
           </div>
@@ -91,23 +106,23 @@
             <div class="row g-3">
               <div class="col-12">
                 <label class="form-label font-sm fw-600">Street Address</label>
-                <input type="text" class="form-control" readonly value="{{ $customer->address ?? 'N/A' }}">
+                <input type="text" name="address" class="form-control" value="{{ old('address', $customer->address) }}">
               </div>
               <div class="col-md-3 col-6">
                 <label class="form-label font-sm fw-600">City</label>
-                <input type="text" class="form-control" readonly value="{{ $customer->city ?? 'N/A' }}">
+                <input type="text" name="city" class="form-control" value="{{ old('city', $customer->city) }}">
               </div>
               <div class="col-md-3 col-6">
                 <label class="form-label font-sm fw-600">State</label>
-                <input type="text" class="form-control" readonly value="{{ $customer->state ?? 'N/A' }}">
+                <input type="text" name="state" class="form-control" value="{{ old('state', $customer->state) }}">
               </div>
               <div class="col-md-3 col-6">
                 <label class="form-label font-sm fw-600">Country</label>
-                <input type="text" class="form-control" readonly value="{{ $customer->country ?? 'India' }}">
+                <input type="text" name="country" class="form-control" value="{{ old('country', $customer->country ?? 'India') }}">
               </div>
               <div class="col-md-3 col-6">
                 <label class="form-label font-sm fw-600">ZIP / Postal Code</label>
-                <input type="text" class="form-control" readonly value="{{ $customer->zip_code ?? 'N/A' }}">
+                <input type="text" name="zip_code" class="form-control" value="{{ old('zip_code', $customer->zip_code) }}">
               </div>
             </div>
           </div>
@@ -126,11 +141,11 @@
               <div class="row g-3">
                 <div class="col-md-6">
                   <label class="form-label font-sm">Driving License Number</label>
-                  <input type="text" class="form-control" readonly value="{{ $customer->dl_number ?? 'N/A' }}">
+                  <input type="text" name="dl_number" class="form-control" value="{{ old('dl_number', $customer->dl_number) }}">
                 </div>
                 <div class="col-md-6">
                   <label class="form-label font-sm">License Expiry Date</label>
-                  <input type="text" class="form-control" readonly value="{{ $customer->dl_expiry ?? 'N/A' }}">
+                  <input type="date" name="dl_expiry" class="form-control" value="{{ old('dl_expiry', $customer->dl_expiry) }}">
                 </div>
                 @if($customer->dl_file)
                 <div class="col-12">
@@ -178,9 +193,10 @@
 
           </div>
 
-          <!-- LOGOUT ACTION -->
-          <div class="pt-3 border-top d-flex justify-content-end gap-3">
-            <a href="{{ url('/user_logout') }}" class="btn btn-danger px-4 fw-700"><i class="fas fa-sign-out-alt me-2"></i> Logout Account</a>
+          <!-- ACTIONS -->
+          <div class="pt-3 border-top d-flex justify-content-between align-items-center gap-3">
+            <a href="{{ url('/user_logout') }}" class="btn btn-outline-danger px-4 fw-700"><i class="fas fa-sign-out-alt me-2"></i> Logout Account</a>
+            <button type="submit" class="btn btn-primary px-5 fw-700 shadow-sm"><i class="fas fa-save me-2"></i> Save Changes / Update Profile</button>
           </div>
 
         </form>

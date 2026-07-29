@@ -236,7 +236,7 @@ class BookingController extends Controller
                 $adminEmail = config('mail.admin_address', env('ADMIN_EMAIL', 'admin@driveease.in'));
                 Mail::to($adminEmail)->send(new NewBookingAdminMail($booking));
             } catch (\Throwable $e) {
-                // Silent fallback
+                \Illuminate\Support\Facades\Log::error('Booking Email Exception for ' . ($recipientEmail ?? 'unknown') . ': ' . $e->getMessage());
             }
 
             // 2. Dispatch Mobile SMS Text Message

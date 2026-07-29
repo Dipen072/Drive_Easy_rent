@@ -163,4 +163,48 @@ class AdminBookingController extends Controller
             'message' => "Cash payment for {$booking->booking_number} approved and confirmed!",
         ]);
     }
+
+    /**
+     * Admin Payments List Page (Dynamic from DB)
+     */
+    public function payments(Request $request)
+    {
+        if (!session()->has('admin_id')) {
+            Alert::warning('Login Required', 'Please log in to access Admin Panel.');
+            return redirect('/admin/login');
+        }
+
+        $query = Payment::with(['booking.customer', 'customer'])->orderBy('id', 'desc');
+
+        if ($request->has('status') && $request->status !== 'all' && !empty($request->status)) {
+            $query->where('payment_status', $request->status);
+        }
+
+        if ($request->has('search') && !empty($request->search)) {
+            $search = strtolower($request->search);
+            $query->where(function ($q) use ($search) {
+                $q->where('transaction_id', 'like', "%{$search}%")
+                  ->orWhere('payment_method', 'like', "%{$search}%")
+                  ->orWhereHas('booking', function ($bq) use ($search) {
+                      $bq->where('booking_number', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('customer', function ($cq) use ($search) {
+                      $cq->where('first_name', 'like', "%{$search}%")
+                         ->orWhere('last_name', 'like', "%{$search}%")
+                         ->orWhere('email', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        $payments = $query->get();
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success'  => true,
+                'payments' => $payments,
+            ]);
+        }
+
+        return view('admin.payments', compact('payments'));
+    }
 }

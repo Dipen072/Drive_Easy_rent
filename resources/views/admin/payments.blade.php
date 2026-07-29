@@ -30,10 +30,19 @@
     <div class="admin-table-wrapper">
       <table class="table-brand">
         <thead>
-          <tr><th>Txn ID</th><th>Booking ID</th><th>Customer</th><th>Amount</th><th>Method</th><th>Date</th><th>Payment Status</th><th>Action</th></tr>
+          <tr>
+            <th>Txn ID</th>
+            <th>Booking ID</th>
+            <th>Customer</th>
+            <th>Amount</th>
+            <th>Method</th>
+            <th>Date</th>
+            <th>Payment Status</th>
+            <th>Action</th>
+          </tr>
         </thead>
         <tbody id="adminPayTable">
-          <!-- Rendered by JS -->
+          <!-- Rendered dynamically by JS using DB records -->
         </tbody>
       </table>
     </div>
@@ -63,8 +72,10 @@
 <script>
   let currentPayFilter = 'all';
 
+  // Dynamic payments dataset from Database
+  const dbPayments = @json($payments);
+
   $(document).ready(function() {
-    Storage.seed();
     renderPayments();
 
     $('#paymentStatusTabs button').on('click', function() {
@@ -78,17 +89,28 @@
   });
 
   function renderPayments() {
-    const bookings = Storage.getBookings();
     const q = $('#paySearchInput').val().toLowerCase().trim();
 
-    let list = bookings;
+    let list = dbPayments;
 
     if (currentPayFilter !== 'all') {
-      list = list.filter(b => b.paymentStatus.toLowerCase() === currentPayFilter.toLowerCase());
+      list = list.filter(p => {
+        const st = (p.payment_status || '').toLowerCase();
+        if (currentPayFilter === 'Paid') {
+          return st === 'paid' || st === 'successful';
+        }
+        return st === currentPayFilter.toLowerCase();
+      });
     }
 
     if (q) {
-      list = list.filter(b => b.id.toLowerCase().includes(q) || b.customerName.toLowerCase().includes(q) || b.payment.toLowerCase().includes(q));
+      list = list.filter(p => {
+        const txnId = (p.transaction_id || ('TXN' + (10000 + p.id))).toLowerCase();
+        const bookingNo = (p.booking ? p.booking.booking_number : ('BK' + p.booking_id)).toLowerCase();
+        const custName = p.customer ? (p.customer.first_name + ' ' + p.customer.last_name).toLowerCase() : 'guest customer';
+        const method = (p.payment_method || '').toLowerCase();
+        return txnId.includes(q) || bookingNo.includes(q) || custName.includes(q) || method.includes(q);
+      });
     }
 
     if (!list.length) {
@@ -96,19 +118,40 @@
       return;
     }
 
-    const html = list.map((b, idx) => {
-      const txnId = `TXN${10000 + idx}`;
+    const html = list.map((p) => {
+      const txnId = p.transaction_id || `TXN${10000 + p.id}`;
+      const bookingNo = p.booking ? p.booking.booking_number : `BK${p.booking_id}`;
+      const custName = p.customer ? `${p.customer.first_name} ${p.customer.last_name}` : (p.booking && p.booking.customer ? `${p.booking.customer.first_name} ${p.booking.customer.last_name}` : 'Guest Customer');
+      const amount = parseFloat(p.amount || (p.booking ? p.booking.total_amount : 0)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const method = p.payment_method || 'Online';
+      
+      let dateStr = 'N/A';
+      if (p.created_at) {
+        dateStr = new Date(p.created_at).toISOString().split('T')[0];
+      }
+
+      const st = p.payment_status || 'Pending';
+      let badgeClass = 'badge-pending';
+      let statusLabel = st;
+
+      if (st === 'Paid' || st === 'Successful') {
+        badgeClass = 'badge-completed';
+        statusLabel = 'Successful';
+      } else if (st === 'Refunded' || st === 'Failed') {
+        badgeClass = 'badge-cancelled';
+      }
+
       return `
         <tr>
           <td class="fw-700 font-mono">${txnId}</td>
-          <td class="fw-700 font-mono text-primary">${b.id}</td>
-          <td class="fw-600">${b.customerName}</td>
-          <td class="fw-800 text-dark">₹${b.total.toLocaleString()}</td>
-          <td><span class="badge bg-light text-dark font-xs">${b.payment}</span></td>
-          <td class="font-sm text-muted">${b.createdAt || '2025-07-20'}</td>
-          <td><span class="badge-${b.paymentStatus === 'Paid' ? 'completed' : (b.paymentStatus === 'Refunded' ? 'cancelled' : 'pending')}">${b.paymentStatus === 'Paid' ? 'Successful' : b.paymentStatus}</span></td>
+          <td class="fw-700 font-mono text-primary">${bookingNo}</td>
+          <td class="fw-600">${custName}</td>
+          <td class="fw-800 text-dark">₹${amount}</td>
+          <td><span class="badge bg-light text-dark font-xs">${method}</span></td>
+          <td class="font-sm text-muted">${dateStr}</td>
+          <td><span class="${badgeClass}">${statusLabel}</span></td>
           <td>
-            <button class="btn btn-sm btn-outline-primary" onclick="viewPaymentDetail('${txnId}', '${b.id}')"><i class="fas fa-eye"></i> Details</button>
+            <button class="btn btn-sm btn-outline-primary" onclick="viewPaymentDetail(${p.id})"><i class="fas fa-eye"></i> Details</button>
           </td>
         </tr>`;
     }).join('');
@@ -116,28 +159,55 @@
     $('#adminPayTable').html(html);
   }
 
-  function viewPaymentDetail(txnId, bookingId) {
-    const b = Storage.getBookingById(bookingId);
-    if (!b) return;
+  function viewPaymentDetail(paymentId) {
+    const p = dbPayments.find(item => item.id === paymentId);
+    if (!p) return;
+
+    const txnId = p.transaction_id || `TXN${10000 + p.id}`;
+    const bookingNo = p.booking ? p.booking.booking_number : `BK${p.booking_id}`;
+    const custName = p.customer ? `${p.customer.first_name} ${p.customer.last_name}` : (p.booking && p.booking.customer ? `${p.booking.customer.first_name} ${p.booking.customer.last_name}` : 'Guest Customer');
+    
+    const b = p.booking || {};
+    const basePrice = parseFloat(b.base_price || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+    const extrasAmount = parseFloat(b.extras_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+    const taxAmount = parseFloat(b.tax_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+    const discountAmount = parseFloat(b.discount_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+    const totalAmount = parseFloat(p.amount || b.total_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+    
+    let dateStr = 'N/A';
+    if (p.created_at) {
+      dateStr = new Date(p.created_at).toLocaleString();
+    }
+
+    const st = p.payment_status || 'Pending';
+    let badgeClass = 'badge-pending';
+    let statusLabel = st;
+
+    if (st === 'Paid' || st === 'Successful') {
+      badgeClass = 'badge-completed';
+      statusLabel = 'Successful';
+    } else if (st === 'Refunded' || st === 'Failed') {
+      badgeClass = 'badge-cancelled';
+    }
 
     $('#paymentModalBody').html(`
       <div class="p-2">
         <div class="d-flex justify-content-between mb-3 border-bottom pb-2">
           <strong class="font-mono text-primary fs-5">${txnId}</strong>
-          <span class="badge-${b.paymentStatus === 'Paid' ? 'completed' : 'pending'}">${b.paymentStatus === 'Paid' ? 'Successful' : b.paymentStatus}</span>
+          <span class="${badgeClass}">${statusLabel}</span>
         </div>
         <div class="row g-2 font-sm mb-3">
-          <div class="col-6"><span class="text-muted">Booking Reference:</span><br><strong class="font-mono">${b.id}</strong></div>
-          <div class="col-6"><span class="text-muted">Customer:</span><br><strong>${b.customerName}</strong></div>
-          <div class="col-6 me-0"><span class="text-muted">Payment Gateway:</span><br><strong>${b.payment}</strong></div>
-          <div class="col-6 me-0"><span class="text-muted">Transaction Date:</span><br><strong>${b.createdAt || '2025-07-20'}</strong></div>
+          <div class="col-6"><span class="text-muted">Booking Reference:</span><br><strong class="font-mono text-primary">${bookingNo}</strong></div>
+          <div class="col-6"><span class="text-muted">Customer:</span><br><strong>${custName}</strong></div>
+          <div class="col-6 me-0"><span class="text-muted">Payment Gateway / Method:</span><br><strong>${p.payment_gateway || p.payment_method || 'Online'}</strong></div>
+          <div class="col-6 me-0"><span class="text-muted">Transaction Date:</span><br><strong>${dateStr}</strong></div>
         </div>
         <div class="bg-surface-2 p-3 rounded border font-sm">
-          <div class="d-flex justify-content-between py-1"><span>Base Tariff:</span><strong>₹${b.basePrice.toLocaleString()}</strong></div>
-          <div class="d-flex justify-content-between py-1"><span>Add-ons:</span><strong>₹${b.extras.toLocaleString()}</strong></div>
-          <div class="d-flex justify-content-between py-1"><span>GST (18%):</span><strong>₹${b.tax.toLocaleString()}</strong></div>
-          <div class="d-flex justify-content-between py-1 text-danger"><span>Discount:</span><strong>-₹${b.discount.toLocaleString()}</strong></div>
-          <div class="d-flex justify-content-between py-1 border-top fw-800 fs-5 text-primary"><span>Total Captured:</span><span>₹${b.total.toLocaleString()}</span></div>
+          <div class="d-flex justify-content-between py-1"><span>Base Tariff:</span><strong>₹${basePrice}</strong></div>
+          <div class="d-flex justify-content-between py-1"><span>Add-ons:</span><strong>₹${extrasAmount}</strong></div>
+          <div class="d-flex justify-content-between py-1"><span>GST (18%):</span><strong>₹${taxAmount}</strong></div>
+          <div class="d-flex justify-content-between py-1 text-danger"><span>Discount:</span><strong>-₹${discountAmount}</strong></div>
+          <div class="d-flex justify-content-between py-1 border-top fw-800 fs-5 text-primary"><span>Total Captured:</span><span>₹${totalAmount}</span></div>
         </div>
       </div>
     `);

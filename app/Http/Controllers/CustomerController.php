@@ -203,6 +203,71 @@ class CustomerController extends Controller
     }
 
     /**
+     * Update Customer Profile
+     */
+    public function updateProfile(Request $request)
+    {
+        if (!session()->has('user_id')) {
+            Alert::warning('Login Required', 'Please log in to update your profile.');
+            return redirect('/login');
+        }
+
+        $customer = Customer::find(session('user_id'));
+        if (!$customer) {
+            Alert::error('Error', 'Customer profile not found.');
+            return redirect('/login');
+        }
+
+        $request->validate([
+            'first_name'      => 'required|string|max:255',
+            'last_name'       => 'required|string|max:255',
+            'email'           => 'required|email|unique:customers,email,' . $customer->id,
+            'phone'           => 'required|string|max:20',
+            'dob'             => 'nullable',
+            'address'         => 'nullable|string',
+            'city'            => 'nullable|string',
+            'state'           => 'nullable|string',
+            'country'         => 'nullable|string',
+            'zip_code'        => 'nullable|string',
+            'dl_number'       => 'nullable|string',
+            'dl_expiry'       => 'nullable',
+            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+        ]);
+
+        $customer->first_name = $request->first_name;
+        $customer->last_name  = $request->last_name;
+        $customer->email      = $request->email;
+        $customer->phone      = $request->phone;
+        $customer->dob        = $request->dob;
+        $customer->address    = $request->address;
+        $customer->city       = $request->city;
+        $customer->state      = $request->state;
+        $customer->country    = $request->country ?? 'India';
+        $customer->zip_code   = $request->zip_code;
+        if ($request->filled('dl_number')) {
+            $customer->dl_number = $request->dl_number;
+        }
+        if ($request->filled('dl_expiry')) {
+            $customer->dl_expiry = $request->dl_expiry;
+        }
+
+        if ($request->hasFile('profile_picture')) {
+            $file = $request->file('profile_picture');
+            $fileName = time() . '_avatar_' . rand(100, 999) . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('upload/customers/avatars'), $fileName);
+            $customer->profile_picture = 'upload/customers/avatars/' . $fileName;
+        }
+
+        $customer->save();
+
+        // Update session user_name
+        session()->put('user_name', $customer->first_name . ' ' . $customer->last_name);
+
+        Alert::success('Profile Updated', 'Your profile details have been updated successfully!');
+        return redirect()->back();
+    }
+
+    /**
      * Customer Logout
      */
     public function logout()
