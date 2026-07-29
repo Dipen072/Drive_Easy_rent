@@ -98,7 +98,11 @@ class CustomerController extends Controller
         if ($request->hasFile('profile_picture')) {
             $file = $request->file('profile_picture');
             $fileName = time() . '_avatar_' . rand(100, 999) . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('upload/customers/avatars'), $fileName);
+            $targetDir = public_path('upload/customers/avatars');
+            if (!file_exists($targetDir)) {
+                @mkdir($targetDir, 0777, true);
+            }
+            $file->move($targetDir, $fileName);
             $customer->profile_picture = 'upload/customers/avatars/' . $fileName;
         }
 
@@ -113,7 +117,11 @@ class CustomerController extends Controller
             if ($request->hasFile('dl_file')) {
                 $file = $request->file('dl_file');
                 $fileName = time() . '_dl_' . rand(100, 999) . '.' . $file->getClientOriginalExtension();
-                $file->move(public_path('upload/customers/documents'), $fileName);
+                $targetDir = public_path('upload/customers/documents');
+                if (!file_exists($targetDir)) {
+                    @mkdir($targetDir, 0777, true);
+                }
+                $file->move($targetDir, $fileName);
                 $customer->dl_file = 'upload/customers/documents/' . $fileName;
             }
         } else {
@@ -123,7 +131,11 @@ class CustomerController extends Controller
             if ($request->hasFile('alt_id_file')) {
                 $file = $request->file('alt_id_file');
                 $fileName = time() . '_altid_' . rand(100, 999) . '.' . $file->getClientOriginalExtension();
-                $file->move(public_path('upload/customers/documents'), $fileName);
+                $targetDir = public_path('upload/customers/documents');
+                if (!file_exists($targetDir)) {
+                    @mkdir($targetDir, 0777, true);
+                }
+                $file->move($targetDir, $fileName);
                 $customer->alt_id_file = 'upload/customers/documents/' . $fileName;
             }
         }
@@ -254,7 +266,11 @@ class CustomerController extends Controller
         if ($request->hasFile('profile_picture')) {
             $file = $request->file('profile_picture');
             $fileName = time() . '_avatar_' . rand(100, 999) . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('upload/customers/avatars'), $fileName);
+            $targetDir = public_path('upload/customers/avatars');
+            if (!file_exists($targetDir)) {
+                @mkdir($targetDir, 0777, true);
+            }
+            $file->move($targetDir, $fileName);
             $customer->profile_picture = 'upload/customers/avatars/' . $fileName;
         }
 

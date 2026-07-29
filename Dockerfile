@@ -46,10 +46,16 @@ COPY . .
 # Install PHP dependencies with Composer
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# Set permissions for Laravel storage & bootstrap cache
-RUN mkdir -p /var/www/html/storage/logs \
-    && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
-    && chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache
+# Set permissions for Laravel storage & bootstrap cache & upload directories
+RUN mkdir -p /var/www/html/public/upload/customers/avatars \
+    /var/www/html/public/upload/customers/documents \
+    /var/www/html/public/upload/cars \
+    /var/www/html/storage/logs \
+    /var/www/html/storage/framework/views \
+    /var/www/html/storage/framework/sessions \
+    /var/www/html/storage/framework/cache \
+    && chown -R www-data:www-data /var/www/html/public/upload /var/www/html/storage /var/www/html/bootstrap/cache \
+    && chmod -R 777 /var/www/html/public/upload /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Make entrypoint script executable
 RUN chmod +x /var/www/html/docker-entrypoint.sh

@@ -14,9 +14,16 @@ if [ "$APP_ENV" = "production" ]; then
     php artisan view:cache || true
 fi
 
-# Ensure storage link & permissions exist
-mkdir -p /var/www/html/storage/logs /var/www/html/storage/framework/views /var/www/html/storage/framework/sessions /var/www/html/storage/framework/cache
-chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache || true
+# Ensure storage & upload link & permissions exist
+mkdir -p /var/www/html/public/upload/customers/avatars \
+         /var/www/html/public/upload/customers/documents \
+         /var/www/html/public/upload/cars \
+         /var/www/html/storage/logs \
+         /var/www/html/storage/framework/views \
+         /var/www/html/storage/framework/sessions \
+         /var/www/html/storage/framework/cache
+chown -R www-data:www-data /var/www/html/public/upload /var/www/html/storage /var/www/html/bootstrap/cache || true
+chmod -R 777 /var/www/html/public/upload /var/www/html/storage /var/www/html/bootstrap/cache || true
 php artisan storage:link || true
 
 # Run DB Migrations & Seeders automatically on Aiven / Remote MySQL
