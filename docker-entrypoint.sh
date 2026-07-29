@@ -14,7 +14,9 @@ if [ "$APP_ENV" = "production" ]; then
     php artisan view:cache || true
 fi
 
-# Ensure storage link exists
+# Ensure storage link & permissions exist
+mkdir -p /var/www/html/storage/logs /var/www/html/storage/framework/views /var/www/html/storage/framework/sessions /var/www/html/storage/framework/cache
+chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache || true
 php artisan storage:link || true
 
 # Run DB Migrations automatically if DB_HOST is set and not 127.0.0.1

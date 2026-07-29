@@ -47,8 +47,9 @@ COPY . .
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
 # Set permissions for Laravel storage & bootstrap cache
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
-    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+RUN mkdir -p /var/www/html/storage/logs \
+    && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
+    && chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Make entrypoint script executable
 RUN chmod +x /var/www/html/docker-entrypoint.sh
