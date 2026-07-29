@@ -5,13 +5,12 @@ namespace App\Mail;
 use App\Models\Booking;
 use App\Services\EmailLoggerService;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class PaymentFailedMail extends Mailable implements ShouldQueue
+class PaymentFailedMail extends Mailable
 {
     use Queueable, SerializesModels;
 
@@ -26,6 +25,23 @@ class PaymentFailedMail extends Mailable implements ShouldQueue
 
     public function envelope(): Envelope
     {
+        $recipient = $this->booking->customer->email ?? null;
+        if ($recipient) {
+            try {
+                EmailLoggerService::log(
+                    emailType: 'PaymentFailed',
+                    recipientEmail: $recipient,
+                    subject: '⚠️ Payment Unsuccessful for Booking #' . $this->booking->booking_number,
+                    customerId: $this->booking->customer_id,
+                    bookingId: $this->booking->id,
+                    status: 'Failed',
+                    errorMessage: $this->failureReason
+                );
+            } catch (\Throwable $e) {
+                // Ignore logging exception
+            }
+        }
+
         return new Envelope(
             subject: '⚠️ Payment Unsuccessful for Booking #' . $this->booking->booking_number,
         );
@@ -36,24 +52,5 @@ class PaymentFailedMail extends Mailable implements ShouldQueue
         return new Content(
             view: 'emails.payment-failed',
         );
-    }
-
-    public function __destruct()
-    {
-        try {
-            if ($this->booking && $this->booking->customer) {
-                EmailLoggerService::log(
-                    emailType: 'PaymentFailed',
-                    recipientEmail: $this->booking->customer->email,
-                    subject: '⚠️ Payment Unsuccessful for Booking #' . $this->booking->booking_number,
-                    customerId: $this->booking->customer_id,
-                    bookingId: $this->booking->id,
-                    status: 'Failed',
-                    errorMessage: $this->failureReason
-                );
-            }
-        } catch (\Throwable $e) {
-            // Ignore destruct logging error
-        }
     }
 }

@@ -5,13 +5,12 @@ namespace App\Mail;
 use App\Models\Booking;
 use App\Services\EmailLoggerService;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class NewBookingAdminMail extends Mailable implements ShouldQueue
+class NewBookingAdminMail extends Mailable
 {
     use Queueable, SerializesModels;
 
@@ -24,20 +23,6 @@ class NewBookingAdminMail extends Mailable implements ShouldQueue
 
     public function envelope(): Envelope
     {
-        return new Envelope(
-            subject: '🚨 New Car Rental Booking Received: ' . $this->booking->booking_number,
-        );
-    }
-
-    public function content(): Content
-    {
-        return new Content(
-            view: 'emails.new-booking-admin',
-        );
-    }
-
-    public function __destruct()
-    {
         try {
             $adminEmail = config('mail.admin_address', env('ADMIN_EMAIL', 'admin@driveease.in'));
             EmailLoggerService::log(
@@ -48,7 +33,18 @@ class NewBookingAdminMail extends Mailable implements ShouldQueue
                 bookingId: $this->booking->id
             );
         } catch (\Throwable $e) {
-            // Ignore destruct logging error
+            // Ignore logging exception
         }
+
+        return new Envelope(
+            subject: '🚨 New Car Rental Booking Received: ' . $this->booking->booking_number,
+        );
+    }
+
+    public function content(): Content
+    {
+        return new Content(
+            view: 'emails.new-booking-admin',
+        );
     }
 }

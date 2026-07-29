@@ -7,6 +7,7 @@ use App\Mail\BookingCancelledAdminMail;
 use App\Mail\BookingCancelledMail;
 use App\Mail\BookingConfirmationMail;
 use App\Mail\NewBookingAdminMail;
+use App\Mail\PaymentSuccessMail;
 use App\Models\Booking;
 use App\Models\Car;
 use App\Models\Coupon;
@@ -224,19 +225,38 @@ class BookingController extends Controller
             // Create Booking via Service
             $booking = $this->bookingService->createBooking($customer->id, $request->validated());
 
-            // Target recipient email specified in checkout form
-            $recipientEmail = $request->email ?? $customer->email;
+            // Reload all relationships for fresh mailable rendering
+            $booking->load(['customer', 'car.category', 'pickupLocation', 'dropoffLocation', 'extraServices', 'payment']);
 
-            // 1. Dispatch Email Notifications
+            // Target recipient email specified in checkout form or customer account
+            $recipientEmail = $request->email ?? ($customer ? $customer->email : null) ?? ($booking->customer ? $booking->customer->email : null);
+
+            // 1. Dispatch Customer Reservation Confirmation Email
             try {
                 if ($recipientEmail) {
                     Mail::to($recipientEmail)->send(new BookingConfirmationMail($booking));
                 }
-
-                $adminEmail = config('mail.admin_address', env('ADMIN_EMAIL', 'admin@driveease.in'));
-                Mail::to($adminEmail)->send(new NewBookingAdminMail($booking));
             } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::error('Booking Email Exception for ' . ($recipientEmail ?? 'unknown') . ': ' . $e->getMessage());
+                \Illuminate\Support\Facades\Log::error('Customer Booking Confirmation Mail Exception for ' . ($recipientEmail ?? 'unknown') . ': ' . $e->getMessage());
+            }
+
+            // 2. Dispatch Customer Payment Receipt Email (if payment is Paid)
+            try {
+                if ($recipientEmail && $booking->payment_status === 'Paid' && $booking->payment) {
+                    Mail::to($recipientEmail)->send(new PaymentSuccessMail($booking, $booking->payment));
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('Customer Payment Success Mail Exception for ' . ($recipientEmail ?? 'unknown') . ': ' . $e->getMessage());
+            }
+
+            // 3. Dispatch Admin Notification Email
+            try {
+                $adminEmail = config('mail.admin_address', env('ADMIN_EMAIL', 'admin@driveease.in'));
+                if ($adminEmail) {
+                    Mail::to($adminEmail)->send(new NewBookingAdminMail($booking));
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('Admin Booking Email Exception: ' . $e->getMessage());
             }
 
             // 2. Dispatch Mobile SMS Text Message

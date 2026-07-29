@@ -5,13 +5,12 @@ namespace App\Mail;
 use App\Models\Customer;
 use App\Services\EmailLoggerService;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class WelcomeCustomerMail extends Mailable implements ShouldQueue
+class WelcomeCustomerMail extends Mailable
 {
     use Queueable, SerializesModels;
 
@@ -24,6 +23,17 @@ class WelcomeCustomerMail extends Mailable implements ShouldQueue
 
     public function envelope(): Envelope
     {
+        try {
+            EmailLoggerService::log(
+                emailType: 'WelcomeCustomer',
+                recipientEmail: $this->customer->email,
+                subject: 'Welcome to DriveEase — Your Account is Ready!',
+                customerId: $this->customer->id
+            );
+        } catch (\Throwable $e) {
+            // Ignore logging exception
+        }
+
         return new Envelope(
             subject: 'Welcome to DriveEase — Your Account is Ready!',
         );
@@ -34,19 +44,5 @@ class WelcomeCustomerMail extends Mailable implements ShouldQueue
         return new Content(
             view: 'emails.welcome-customer',
         );
-    }
-
-    public function __destruct()
-    {
-        try {
-            EmailLoggerService::log(
-                emailType: 'WelcomeCustomer',
-                recipientEmail: $this->customer->email,
-                subject: 'Welcome to DriveEase — Your Account is Ready!',
-                customerId: $this->customer->id
-            );
-        } catch (\Throwable $e) {
-            // Ignore destruct logging error
-        }
     }
 }

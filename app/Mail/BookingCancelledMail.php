@@ -5,13 +5,12 @@ namespace App\Mail;
 use App\Models\Booking;
 use App\Services\EmailLoggerService;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class BookingCancelledMail extends Mailable implements ShouldQueue
+class BookingCancelledMail extends Mailable
 {
     use Queueable, SerializesModels;
 
@@ -24,6 +23,21 @@ class BookingCancelledMail extends Mailable implements ShouldQueue
 
     public function envelope(): Envelope
     {
+        $recipient = $this->booking->customer->email ?? null;
+        if ($recipient) {
+            try {
+                EmailLoggerService::log(
+                    emailType: 'BookingCancelled',
+                    recipientEmail: $recipient,
+                    subject: 'Reservation Cancelled #' . $this->booking->booking_number . ' — DriveEase',
+                    customerId: $this->booking->customer_id,
+                    bookingId: $this->booking->id
+                );
+            } catch (\Throwable $e) {
+                // Ignore logging exception
+            }
+        }
+
         return new Envelope(
             subject: 'Reservation Cancelled #' . $this->booking->booking_number . ' — DriveEase',
         );
@@ -34,22 +48,5 @@ class BookingCancelledMail extends Mailable implements ShouldQueue
         return new Content(
             view: 'emails.booking-cancelled',
         );
-    }
-
-    public function __destruct()
-    {
-        try {
-            if ($this->booking && $this->booking->customer) {
-                EmailLoggerService::log(
-                    emailType: 'BookingCancelled',
-                    recipientEmail: $this->booking->customer->email,
-                    subject: 'Reservation Cancelled #' . $this->booking->booking_number . ' — DriveEase',
-                    customerId: $this->booking->customer_id,
-                    bookingId: $this->booking->id
-                );
-            }
-        } catch (\Throwable $e) {
-            // Ignore destruct logging error
-        }
     }
 }
