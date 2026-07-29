@@ -21,6 +21,13 @@ class AdminAuth
             return redirect('/admin/login');
         }
 
+        $admin = \App\Models\Admin::find(session('admin_id'));
+        if (!$admin) {
+            session()->forget(['admin_id', 'admin_name', 'admin_email']);
+            Alert::error('Access Denied', 'Invalid admin session. Please log in again!');
+            return redirect('/admin/login');
+        }
+
         return $next($request);
     }
 }
