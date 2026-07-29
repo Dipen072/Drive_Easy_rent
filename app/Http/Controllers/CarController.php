@@ -86,23 +86,14 @@ class CarController extends Controller
      */
     public function websiteCars(Request $request)
     {
-        try {
-            if (Car::count() === 0) {
-                \Illuminate\Support\Facades\Artisan::call('db:seed', ['--force' => true]);
-            }
+        $query = Car::with('category')->where('status', 'Available');
 
-            $query = Car::with('category')->where('status', 'Available');
-
-            if ($request->has('category') && $request->category != 'all') {
-                $query->where('category_id', $request->category);
-            }
-
-            $cars = $query->orderBy('id', 'desc')->get();
-            $categories = Category::withCount('cars')->get();
-        } catch (\Throwable $e) {
-            $cars = collect();
-            $categories = collect();
+        if ($request->has('category') && $request->category != 'all') {
+            $query->where('category_id', $request->category);
         }
+
+        $cars = $query->orderBy('id', 'desc')->get();
+        $categories = Category::withCount('cars')->get();
 
         return view('website.cars', compact('cars', 'categories'));
     }
@@ -112,17 +103,8 @@ class CarController extends Controller
      */
     public function websiteIndex()
     {
-        try {
-            if (Car::count() === 0) {
-                \Illuminate\Support\Facades\Artisan::call('db:seed', ['--force' => true]);
-            }
-
-            $featuredCars = Car::with('category')->where('status', 'Available')->latest()->take(6)->get();
-            $categories   = Category::withCount('cars')->get();
-        } catch (\Throwable $e) {
-            $featuredCars = collect();
-            $categories   = collect();
-        }
+        $featuredCars = Car::with('category')->where('status', 'Available')->latest()->take(6)->get();
+        $categories   = Category::withCount('cars')->get();
 
         return view('website.index', compact('featuredCars', 'categories'));
     }

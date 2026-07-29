@@ -26,11 +26,10 @@ chown -R www-data:www-data /var/www/html/public/upload /var/www/html/storage /va
 chmod -R 777 /var/www/html/public/upload /var/www/html/storage /var/www/html/bootstrap/cache || true
 php artisan storage:link || true
 
-# Run DB Migrations & Seeders automatically on Aiven / Remote MySQL
+# Run DB Migrations automatically if DB_HOST is set and not 127.0.0.1
 if [ -n "$DB_HOST" ] && [ "$DB_HOST" != "127.0.0.1" ]; then
-    echo "Running database migration and seeders for $DB_HOST..."
+    echo "Running database migration for $DB_HOST..."
     php artisan migrate --force || echo "Migrations failed or already completed."
-    php artisan db:seed --force || echo "Database seeding completed or skipped."
 fi
 
 # Start Apache in foreground
