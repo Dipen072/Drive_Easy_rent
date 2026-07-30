@@ -93,7 +93,7 @@
                     <div class="d-flex gap-1">
                       <a href="{{ url('/my-bookings/' . $b->id) }}" class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i> Details</a>
                       @if(!in_array($b->booking_status, ['Completed', 'Cancelled']))
-                        <button class="btn btn-sm btn-outline-danger" onclick="cancelCustomerBooking({{ $b->id }})"><i class="fas fa-times-circle"></i> Cancel</button>
+                        <button class="btn btn-sm btn-outline-danger btn-cancel-booking" onclick="cancelCustomerBooking({{ $b->id }}, this)"><i class="fas fa-times-circle"></i> Cancel</button>
                       @endif
                     </div>
                   </td>
@@ -109,10 +109,15 @@
 </div>
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-  function cancelCustomerBooking(bookingId) {
+  function cancelCustomerBooking(bookingId, btnEl) {
     const reason = prompt('Please specify cancellation reason:');
     if (reason === null) return;
+
+    const $btn = $(btnEl);
+    const originalText = $btn.html();
+    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Cancelling...');
 
     const csrfToken = '{{ csrf_token() }}';
     $.ajax({
@@ -124,14 +129,29 @@
       },
       success: function(res) {
         if (res.success) {
-          alert(res.message);
-          window.location.reload();
+          if (typeof Swal !== 'undefined') {
+            Swal.fire({
+              icon: 'success',
+              title: 'Cancelled!',
+              text: res.message,
+              confirmButtonColor: '#0d6efd'
+            }).then(() => {
+              window.location.reload();
+            });
+          } else {
+            alert(res.message);
+            window.location.reload();
+          }
+        } else {
+          alert(res.message || 'Error cancelling booking.');
+          $btn.prop('disabled', false).html(originalText);
         }
       },
       error: function(xhr) {
         alert(xhr.responseJSON ? xhr.responseJSON.message : 'Error cancelling booking.');
+        $btn.prop('disabled', false).html(originalText);
       }
-    }
-  });
+    });
+  }
 </script>
 @endsection

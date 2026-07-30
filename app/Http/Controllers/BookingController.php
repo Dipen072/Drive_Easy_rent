@@ -378,13 +378,23 @@ class BookingController extends Controller
             if ($booking->customer && $booking->customer->email) {
                 Mail::to($booking->customer->email)->send(new BookingCancelledMail($booking));
             }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Cancellation Customer Mail Error: ' . $e->getMessage());
+        }
 
+        try {
             $adminEmail = config('mail.admin_address', env('ADMIN_EMAIL', 'admin@driveease.in'));
-            Mail::to($adminEmail)->send(new BookingCancelledAdminMail($booking));
-            
+            if ($adminEmail) {
+                Mail::to($adminEmail)->send(new BookingCancelledAdminMail($booking));
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Cancellation Admin Mail Error: ' . $e->getMessage());
+        }
+
+        try {
             SmsService::sendCancellationSms($booking);
         } catch (\Throwable $e) {
-            // Silent fallback
+            \Illuminate\Support\Facades\Log::error('Cancellation SMS Error: ' . $e->getMessage());
         }
 
         return response()->json([

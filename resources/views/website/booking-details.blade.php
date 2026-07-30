@@ -151,6 +151,10 @@
     const reason = prompt('Please specify cancellation reason:');
     if (reason === null) return;
 
+    const $btn = $(this);
+    const originalText = $btn.html();
+    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Cancelling...');
+
     const csrfToken = '{{ csrf_token() }}';
     $.ajax({
       url: '/booking/{{ $booking->id }}/cancel',
@@ -163,10 +167,14 @@
         if (res.success) {
           alert(res.message);
           window.location.reload();
+        } else {
+          alert(res.message || 'Error cancelling booking.');
+          $btn.prop('disabled', false).html(originalText);
         }
       },
       error: function(xhr) {
         alert(xhr.responseJSON ? xhr.responseJSON.message : 'Error cancelling booking.');
+        $btn.prop('disabled', false).html(originalText);
       }
     });
   });
