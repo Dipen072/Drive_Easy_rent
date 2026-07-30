@@ -18,6 +18,16 @@ return new class extends Migration
             $table->string('password');
             $table->timestamps();
         });
+
+        // Ensure default Admin account exists
+        \Illuminate\Support\Facades\DB::table('admins')->insertOrIgnore([
+            'id'         => 1,
+            'name'       => 'Admin',
+            'email'      => 'admin@driveease.in',
+            'password'   => \Illuminate\Support\Facades\Hash::make('admin123'),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 
     /**
