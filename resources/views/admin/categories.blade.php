@@ -10,25 +10,25 @@
     <button class="btn btn-primary-brand btn-sm-brand" onclick="openCatModal()"><i class="fas fa-plus me-1"></i> Add Category</button>
   </div>
 
-  <div class="row g-4 row-cols-1 row-cols-md-2 row-cols-lg-3" id="categoriesGrid">
+  <div class="row g-4" id="categoriesGrid">
     @forelse($categories as $c)
-      <div class="col">
-        <div class="bg-surface p-4 rounded-card border shadow-xs h-100 d-flex flex-column justify-content-between">
+      <div class="col-12 col-sm-6 col-md-4 col-xl-3">
+        <div class="bg-surface p-4 rounded-card border shadow-xs h-100 d-flex flex-column justify-content-between" style="min-width: 250px;">
           <div>
             <div class="d-flex align-items-center justify-content-between mb-3">
               <div class="d-flex align-items-center gap-3">
-                <div class="category-icon m-0"><i class="fas {{ $c->icon ?? 'fa-car' }}"></i></div>
+                <div class="category-icon m-0" style="width:48px; height:48px; min-width:48px; font-size:1.25rem; background:var(--primary-lighter); color:var(--primary); border-radius:12px; display:flex; align-items:center; justify-content:center;"><i class="fas {{ $c->icon ?? 'fa-car' }}"></i></div>
                 <div>
-                  <h5 class="fw-700 font-heading mb-0">{{ $c->name }}</h5>
-                  <span class="badge bg-primary-lighter text-primary font-xs">{{ $c->cars_count ?? 0 }} Vehicles</span>
+                  <h5 class="fw-700 font-heading mb-1 text-dark fs-5">{{ $c->name }}</h5>
+                  <span class="badge bg-primary-lighter text-primary font-xs px-2 py-1">{{ $c->cars_count ?? 0 }} Vehicles</span>
                 </div>
               </div>
             </div>
             <p class="font-sm text-muted mb-3">{{ $c->description ?? 'No description provided.' }}</p>
           </div>
-          <div class="d-flex gap-2 pt-2 border-top">
-            <button class="btn btn-sm btn-outline-primary flex-fill" onclick="editCat({{ $c->id }}, '{{ $c->name }}', '{{ $c->icon }}', '{{ addslashes($c->description) }}')"><i class="fas fa-edit me-1"></i> Edit</button>
-            <a href="{{ url('/admin/del-category/' . $c->id) }}" onclick="return confirm('Are you sure you want to delete this category?')" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash-alt"></i></a>
+          <div class="d-flex align-items-center gap-2 pt-3 border-top mt-auto">
+            <button class="btn btn-sm btn-outline-primary flex-fill fw-600" onclick="editCat({{ $c->id }}, '{{ $c->name }}', '{{ $c->icon }}', '{{ addslashes($c->description) }}')"><i class="fas fa-edit me-1"></i> Edit</button>
+            <a href="{{ url('/admin/del-category/' . $c->id) }}" onclick="return confirm('Are you sure you want to delete this category?')" class="btn btn-sm btn-outline-danger px-3"><i class="fas fa-trash-alt"></i></a>
           </div>
         </div>
       </div>
