@@ -294,4 +294,136 @@ class CustomerController extends Controller
         Alert::success('Logged Out', 'Logout Successfully');
         return redirect('/login');
     }
+
+    /**
+     * Show Forgot Password View
+     */
+    public function showForgotPassword()
+    {
+        return view('website.auth.forgot-password');
+    }
+
+    /**
+     * Send OTP to customer's registered email
+     */
+    public function sendResetOtp(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email'
+        ]);
+
+        $customer = Customer::where('email', $request->email)->first();
+
+        if (!$customer) {
+            Alert::error('Email Not Found', 'This email address is not registered in our system.');
+            return back()->withInput();
+        }
+
+        // Generate 6-digit OTP
+        $otp = rand(100000, 999999);
+
+        // Store OTP & Email in session for 10 minutes
+        session()->put('reset_email', $customer->email);
+        session()->put('reset_otp', $otp);
+        session()->put('reset_otp_expires_at', now()->addMinutes(10));
+        session()->forget('reset_otp_verified');
+
+        // Send OTP email
+        try {
+            Mail::to($customer->email)->send(new \App\Mail\PasswordResetOtpMail($otp, $customer->first_name, $customer->email));
+        } catch (\Throwable $e) {
+            // Email dispatch fallback
+        }
+
+        Alert::success('OTP Sent!', 'A 6-digit OTP verification code has been sent to ' . $customer->email);
+        return redirect('/verify-otp');
+    }
+
+    /**
+     * Show Verify OTP View
+     */
+    public function showVerifyOtp()
+    {
+        if (!session()->has('reset_email') || !session()->has('reset_otp')) {
+            Alert::warning('Session Expired', 'Please enter your registered email to get a reset OTP.');
+            return redirect('/forgot-password');
+        }
+
+        return view('website.auth.verify-otp');
+    }
+
+    /**
+     * Verify submitted OTP
+     */
+    public function verifyResetOtp(Request $request)
+    {
+        $request->validate([
+            'otp' => 'required|digits:6'
+        ]);
+
+        if (!session()->has('reset_otp') || !session()->has('reset_email')) {
+            Alert::error('Session Expired', 'OTP session has expired. Please request a new OTP.');
+            return redirect('/forgot-password');
+        }
+
+        $expiresAt = session('reset_otp_expires_at');
+        if ($expiresAt && now()->greaterThan($expiresAt)) {
+            session()->forget(['reset_email', 'reset_otp', 'reset_otp_expires_at', 'reset_otp_verified']);
+            Alert::error('OTP Expired', 'The OTP code has expired. Please request a new one.');
+            return redirect('/forgot-password');
+        }
+
+        if ($request->otp == session('reset_otp')) {
+            session()->put('reset_otp_verified', true);
+            Alert::success('OTP Verified', 'OTP verified successfully! Please enter your new password.');
+            return redirect('/reset-password');
+        } else {
+            Alert::error('Invalid OTP', 'The OTP code you entered is incorrect. Please try again.');
+            return back();
+        }
+    }
+
+    /**
+     * Show Reset Password View
+     */
+    public function showResetPassword()
+    {
+        if (!session()->has('reset_otp_verified') || !session()->has('reset_email')) {
+            Alert::warning('Unauthorized', 'Please verify your OTP before resetting password.');
+            return redirect('/forgot-password');
+        }
+
+        return view('website.auth.reset-password');
+    }
+
+    /**
+     * Update customer password
+     */
+    public function updatePassword(Request $request)
+    {
+        if (!session()->has('reset_otp_verified') || !session()->has('reset_email')) {
+            Alert::error('Session Expired', 'Password reset session expired. Please start again.');
+            return redirect('/forgot-password');
+        }
+
+        $request->validate([
+            'password' => 'required|string|min:6|confirmed'
+        ]);
+
+        $customer = Customer::where('email', session('reset_email'))->first();
+
+        if (!$customer) {
+            Alert::error('Error', 'Customer record not found.');
+            return redirect('/login');
+        }
+
+        $customer->password = Hash::make($request->password);
+        $customer->save();
+
+        // Clear reset session variables
+        session()->forget(['reset_email', 'reset_otp', 'reset_otp_expires_at', 'reset_otp_verified']);
+
+        Alert::success('Password Updated', 'Your password has been reset successfully! Please log in with your new password.');
+        return redirect('/login');
+    }
 }

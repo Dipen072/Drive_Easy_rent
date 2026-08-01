@@ -4,11 +4,20 @@ namespace App\Http\Controllers;
 
 use App\Models\Admin;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Hash;
 use RealRashid\SweetAlert\Facades\Alert;
 
 class AdminController extends Controller
 {
+    /**
+     * Show Admin Login Form
+     */
+    public function showLoginForm()
+    {
+        return view('admin.login');
+    }
+
     /**
      * Admin Login Authentication
      */
@@ -38,6 +47,15 @@ class AdminController extends Controller
                 session()->put('admin_id', $data->id);
                 session()->put('admin_name', $data->name);
                 session()->put('admin_email', $data->email);
+
+                // Handle Remember Me Cookies (Store for 30 days)
+                if ($request->has('remember')) {
+                    Cookie::queue('remember_admin_email', $request->email, 60 * 24 * 30);
+                    Cookie::queue('remember_admin_password', $request->password, 60 * 24 * 30);
+                } else {
+                    Cookie::queue(Cookie::forget('remember_admin_email'));
+                    Cookie::queue(Cookie::forget('remember_admin_password'));
+                }
 
                 Alert::success('Login Success', 'Welcome to Admin Dashboard, ' . $data->name . '!');
                 return redirect('/admin/index');

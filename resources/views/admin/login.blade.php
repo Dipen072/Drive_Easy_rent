@@ -65,15 +65,24 @@
       <label class="form-label text-white-50 font-sm fw-600">Admin Email</label>
       <div class="input-group">
         <span class="input-group-text bg-dark border-secondary text-white-50"><i class="fas fa-envelope"></i></span>
-        <input type="email" name="email" class="form-control" id="adminEmail" placeholder="e.g. admin@driveease.com" value="{{ old('email') }}" required>
+        <input type="email" name="email" class="form-control" id="adminEmail" placeholder="e.g. admin@driveease.com" value="{{ old('email', request()->cookie('remember_admin_email')) }}" required>
       </div>
     </div>
-    <div class="mb-4">
+    <div class="mb-3">
       <label class="form-label text-white-50 font-sm fw-600">Password</label>
       <div class="input-group">
         <span class="input-group-text bg-dark border-secondary text-white-50"><i class="fas fa-lock"></i></span>
-        <input type="password" name="password" class="form-control" id="adminPass" placeholder="••••••••" required>
+        <input type="password" name="password" class="form-control" id="adminPass" placeholder="••••••••" value="{{ request()->cookie('remember_admin_password') }}" required>
       </div>
+    </div>
+    <div class="d-flex align-items-center justify-content-between mb-4">
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" name="remember" id="rememberMe" value="1" {{ request()->cookie('remember_admin_email') ? 'checked' : '' }}>
+        <label class="form-check-label text-white-50 font-xs fw-600 cursor-pointer" for="rememberMe">
+          Remember Me (Save Cookie)
+        </label>
+      </div>
+      <span class="badge bg-dark text-white-50 font-xs"><i class="fas fa-cookie-bite text-warning me-1"></i> Cookie Enabled</span>
     </div>
     <button type="submit" class="btn btn-primary-brand w-100 btn-lg-brand fw-700">
       Sign In to Dashboard <i class="fas fa-arrow-right ms-2"></i>

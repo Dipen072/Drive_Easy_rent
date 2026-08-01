@@ -21,13 +21,15 @@ Route::middleware(['customer.guest'])->group(function () {
     Route::get('/register', [CustomerController::class, 'create']);
     Route::post('/register', [CustomerController::class, 'store']);
 
-    Route::get('/forgot-password', function () {
-        return view('website.auth.forgot-password');
-    });
+    // Customer Forgot Password & OTP Reset Routes
+    Route::get('/forgot-password', [CustomerController::class, 'showForgotPassword']);
+    Route::post('/send-reset-otp', [CustomerController::class, 'sendResetOtp']);
 
-    Route::get('/reset-password', function () {
-        return view('website.auth.reset-password');
-    });
+    Route::get('/verify-otp', [CustomerController::class, 'showVerifyOtp']);
+    Route::post('/verify-reset-otp', [CustomerController::class, 'verifyResetOtp']);
+
+    Route::get('/reset-password', [CustomerController::class, 'showResetPassword']);
+    Route::post('/update-password', [CustomerController::class, 'updatePassword']);
 });
 
 // Customer Auth Routes (Protected - ALL Website pages require Customer Login)
@@ -109,9 +111,7 @@ Route::middleware(['customer.auth'])->group(function () {
 
 // Admin Guest Routes (Only accessible when Admin is NOT logged in)
 Route::middleware(['admin.guest'])->prefix('admin')->group(function () {
-    Route::get('/login', function () {
-        return view('admin.login');
-    });
+    Route::get('/login', [AdminController::class, 'showLoginForm']);
     Route::post('/login_auth', [AdminController::class, 'admin_login_auth']);
 });
 
@@ -128,6 +128,8 @@ Route::middleware(['admin.auth'])->prefix('admin')->group(function () {
     Route::get('/cars', [CarController::class, 'index']);
     Route::get('/add-car', [CarController::class, 'create']);
     Route::post('/store-car', [CarController::class, 'store']);
+    Route::get('/edit-car/{id}', [CarController::class, 'edit']);
+    Route::post('/update-car/{id}', [CarController::class, 'update']);
     Route::get('/del-car/{id}', [CarController::class, 'destroy']);
 
     // Categories Management

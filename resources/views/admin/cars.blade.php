@@ -53,6 +53,9 @@
               <span class="badge bg-success-light text-success fw-700"><i class="fas fa-check-circle me-1"></i> {{ $car->status }}</span>
             </td>
             <td>
+              <a href="{{ url('/admin/edit-car/' . $car->id) }}" class="btn btn-sm btn-outline-primary me-1" title="Edit Vehicle">
+                <i class="fas fa-edit"></i>
+              </a>
               <a href="{{ url('/admin/del-car/' . $car->id) }}" onclick="return confirm('Are you sure you want to delete this vehicle?')" class="btn btn-sm btn-outline-danger" title="Delete Vehicle">
                 <i class="fas fa-trash-alt"></i>
               </a>

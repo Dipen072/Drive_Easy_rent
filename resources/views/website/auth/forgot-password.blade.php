@@ -16,15 +16,32 @@
       <div class="brand-logo"><i class="fas fa-car-side"></i></div>
       <span class="brand-name">Drive<span>Ease</span></span>
     </a>
-    <h4 class="fw-800 font-heading">Reset Password</h4>
-    <p class="text-muted font-sm">Enter your registered email to receive a password reset link.</p>
+    <h4 class="fw-800 font-heading">Forgot Password</h4>
+    <p class="text-muted font-sm">Enter your registered email address to receive a 6-digit OTP code.</p>
   </div>
-  <form id="forgotForm">
-    <div class="mb-3">
-      <label class="form-label">Email Address</label>
-      <input type="email" class="form-control" id="forgotEmail" placeholder="arjun.sharma@email.com" required>
+
+  @if ($errors->any())
+    <div class="alert alert-danger font-xs mb-3">
+      <ul class="mb-0 ps-3">
+        @foreach ($errors->all() as $error)
+          <li>{{ $error }}</li>
+        @endforeach
+      </ul>
     </div>
-    <button type="submit" class="btn btn-primary-brand w-100 btn-lg-brand fw-700">Send Reset Link</button>
+  @endif
+
+  <form id="forgotForm" action="{{ url('/send-reset-otp') }}" method="POST">
+    @csrf
+    <div class="mb-4">
+      <label class="form-label fw-600 font-sm">Registered Email Address *</label>
+      <div class="input-group">
+        <span class="input-group-text bg-light"><i class="fas fa-envelope text-muted"></i></span>
+        <input type="email" name="email" class="form-control" id="forgotEmail" placeholder="e.g. arjun.sharma@email.com" value="{{ old('email') }}" required autofocus>
+      </div>
+    </div>
+    <button type="submit" class="btn btn-primary-brand w-100 btn-lg-brand fw-700">
+      Send OTP Code <i class="fas fa-paper-plane ms-2"></i>
+    </button>
   </form>
   <div class="text-center mt-4 pt-3 border-top">
     <a href="{{url('/login')}}" class="font-sm text-muted text-decoration-none"><i class="fas fa-arrow-left me-1"></i> Back to Login</a>
@@ -32,12 +49,6 @@
 </div>
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="{{url('website/js/ui.js')}}"></script>
-<script>
-  $('#forgotForm').on('submit', function(e){
-    e.preventDefault();
-    Toast.success('Reset Link Sent', 'Password reset instructions have been sent to your email.');
-    setTimeout(() => window.location.href = "{{url('/reset-password')}}", 1500);
-  });
-</script>
+@include('sweetalert::alert')
 </body>
 </html>

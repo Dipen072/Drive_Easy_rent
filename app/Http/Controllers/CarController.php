@@ -69,6 +69,63 @@ class CarController extends Controller
     }
 
     /**
+     * Admin: Show form to edit a car
+     */
+    public function edit($id)
+    {
+        $car = Car::find($id);
+        if (!$car) {
+            Alert::error('Not Found', 'Vehicle not found!');
+            return redirect('/admin/cars');
+        }
+        $categories = Category::all();
+        return view('admin.edit-car', compact('car', 'categories'));
+    }
+
+    /**
+     * Admin: Update car details
+     */
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'brand_name'   => 'required|string|max:255',
+            'model_name'   => 'required|string|max:255',
+            'rate_per_day' => 'required|numeric',
+            'category_id'  => 'required',
+            'image'        => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+        ]);
+
+        $car = Car::find($id);
+        if (!$car) {
+            Alert::error('Not Found', 'Vehicle not found!');
+            return redirect('/admin/cars');
+        }
+
+        $car->brand_name   = $request->brand_name;
+        $car->model_name   = $request->model_name;
+        $car->year         = $request->year ?? '2024';
+        $car->category_id  = $request->category_id;
+        $car->rate_per_day = $request->rate_per_day;
+        $car->location     = $request->location ?? 'Mumbai';
+        $car->seats        = $request->seats ?? 5;
+        $car->fuel_type    = $request->fuel_type ?? 'Petrol';
+        $car->transmission = $request->transmission ?? 'Automatic';
+        $car->status       = $request->status ?? 'Available';
+
+        if ($request->hasFile('image')) {
+            $file = $request->file('image');
+            $fileName = time() . '_' . rand(100, 999) . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('upload/cars'), $fileName);
+            $car->image = 'upload/cars/' . $fileName;
+        }
+
+        $car->save();
+
+        Alert::success('Updated', 'Vehicle details updated successfully!');
+        return redirect('/admin/cars');
+    }
+
+    /**
      * Admin: Delete car
      */
     public function destroy($id)
