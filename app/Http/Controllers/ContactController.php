@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\ContactInquiryMail;
 use App\Models\Contact;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use RealRashid\SweetAlert\Facades\Alert;
 
 class ContactController extends Controller
@@ -30,12 +33,20 @@ class ContactController extends Controller
      */
     public function store(Request $request)
     {
-        $validated=$request->validate([
-            'name'=>'required',
-            'email'=>'required',
-            'phone'=>'required',
-            'subject'=>'required',
-            'message'=>'required',
+        $validated = $request->validate([
+            'name'    => 'required|string|max:255',
+            'email'   => 'required|email|max:255',
+            'phone'   => 'required|string|max:20',
+            'subject' => 'required|string',
+            'message' => 'required|string|min:5',
+        ], [
+            'name.required'    => 'Please enter your full name.',
+            'email.required'   => 'Please enter your email address.',
+            'email.email'      => 'Please enter a valid email address.',
+            'phone.required'   => 'Please enter your phone number.',
+            'subject.required' => 'Please select an inquiry subject.',
+            'message.required' => 'Please enter your message.',
+            'message.min'      => 'Message must be at least 5 characters long.',
         ]);
 
         $table = new Contact();
@@ -45,7 +56,14 @@ class ContactController extends Controller
         $table->subject = $request->subject;
         $table->message = $request->message;
         $table->save();
-        Alert::success('Success', 'Your message has been sent successfully!');
+
+        try {
+            Mail::to($table->email)->send(new ContactInquiryMail($table));
+        } catch (\Throwable $e) {
+            Log::error('Failed to send contact inquiry email: ' . $e->getMessage());
+        }
+
+        Alert::success('Success', 'Your message has been sent successfully! A copy of your inquiry details has been emailed to you.');
         return redirect('/contact');
     }
 

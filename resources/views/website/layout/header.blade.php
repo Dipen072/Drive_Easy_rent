@@ -25,9 +25,13 @@ if (!function_exists('active')) {
   <!-- Flatpickr -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   
+  <!-- CSRF Token -->
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  
   <!-- Website CSS Paths -->
   <link rel="stylesheet" href="{{url('website/css/main.css')}}">
   <link rel="stylesheet" href="{{url('website/css/home.css')}}">
+  <link rel="stylesheet" href="{{url('website/css/chatbot.css')}}">
 </head>
 <body>
 

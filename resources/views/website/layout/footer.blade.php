@@ -83,6 +83,10 @@
 <script src="{{url('website/js/storage.js')}}"></script>
 <script src="{{url('website/js/ui.js')}}"></script>
 <script src="{{url('website/js/home.js')}}"></script>
+<script src="{{url('website/js/chatbot.js')}}"></script>
+
+<!-- AI Chatbot View -->
+@include('website.layout.chatbot')
 
 @include('sweetalert::alert')
 </body>

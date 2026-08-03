@@ -10,6 +10,7 @@ use App\Http\Controllers\BookingController;
 use App\Http\Controllers\CouponController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\AdminBookingController;
+use App\Http\Controllers\ChatbotController;
 
 // Customer Guest Routes (Only accessible when Customer is NOT logged in)
 Route::middleware(['customer.guest'])->group(function () {
@@ -108,6 +109,9 @@ Route::middleware(['customer.auth'])->group(function () {
         return view('website.cancellation-policy');
     });
 });
+
+// AI Chatbot API (Accessible to all visitors & logged in users)
+Route::post('/chatbot/message', [ChatbotController::class, 'respond']);
 
 // Admin Guest Routes (Only accessible when Admin is NOT logged in)
 Route::middleware(['admin.guest'])->prefix('admin')->group(function () {

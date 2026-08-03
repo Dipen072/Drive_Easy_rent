@@ -66,11 +66,12 @@
       @if ($errors->any())
         <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
           <i class="fas fa-exclamation-triangle me-2"></i><strong>Please fix the following errors:</strong>
-          <ul class="mb-0 mt-2">
+          <ul class="mb-0 mt-2 ps-3 font-sm">
             @foreach ($errors->all() as $error)
               <li>{{ $error }}</li>
             @endforeach
           </ul>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
       @endif
 
@@ -83,23 +84,38 @@
           <div class="row g-3">
             <div class="col-md-6">
               <label class="form-label">First Name *</label>
-              <input type="text" name="first_name" class="form-control" id="firstName" value="{{ old('first_name') }}" required placeholder="e.g. Arjun">
+              <input type="text" name="first_name" class="form-control @error('first_name') is-invalid @enderror" id="firstName" value="{{ old('first_name') }}" required placeholder="e.g. Arjun">
+              @error('first_name')
+                <div class="invalid-feedback d-block">{{ $message }}</div>
+              @enderror
             </div>
             <div class="col-md-6">
               <label class="form-label">Last Name *</label>
-              <input type="text" name="last_name" class="form-control" id="lastName" value="{{ old('last_name') }}" required placeholder="e.g. Sharma">
+              <input type="text" name="last_name" class="form-control @error('last_name') is-invalid @enderror" id="lastName" value="{{ old('last_name') }}" required placeholder="e.g. Sharma">
+              @error('last_name')
+                <div class="invalid-feedback d-block">{{ $message }}</div>
+              @enderror
             </div>
             <div class="col-md-6">
               <label class="form-label">Email Address *</label>
-              <input type="email" name="email" class="form-control" id="signupEmail" value="{{ old('email') }}" required placeholder="arjun.sharma@email.com">
+              <input type="email" name="email" class="form-control @error('email') is-invalid @enderror" id="signupEmail" value="{{ old('email') }}" required placeholder="arjun.sharma@email.com">
+              @error('email')
+                <div class="invalid-feedback d-block">{{ $message }}</div>
+              @enderror
             </div>
             <div class="col-md-6">
               <label class="form-label">Mobile Number *</label>
-              <input type="tel" name="phone" class="form-control" id="signupMobile" value="{{ old('phone') }}" required placeholder="+91 98765 43210">
+              <input type="tel" name="phone" class="form-control @error('phone') is-invalid @enderror" id="signupMobile" value="{{ old('phone') }}" required placeholder="+91 98765 43210">
+              @error('phone')
+                <div class="invalid-feedback d-block">{{ $message }}</div>
+              @enderror
             </div>
             <div class="col-md-6">
               <label class="form-label">Date of Birth <span class="text-muted font-xs">(optional)</span></label>
-              <input type="date" name="dob" class="form-control" id="dob" value="{{ old('dob') }}">
+              <input type="date" name="dob" class="form-control @error('dob') is-invalid @enderror" id="dob" value="{{ old('dob') }}">
+              @error('dob')
+                <div class="invalid-feedback d-block">{{ $message }}</div>
+              @enderror
             </div>
             <div class="col-md-6">
               <label class="form-label">Profile Picture <span class="text-muted font-xs">(optional)</span></label>
@@ -108,6 +124,9 @@
                 <button type="button" class="btn btn-outline-brand btn-sm" onclick="$('#avatarFileInput').click()">Upload Photo</button>
                 <input type="file" name="profile_picture" class="d-none" id="avatarFileInput" accept="image/*">
               </div>
+              @error('profile_picture')
+                <div class="invalid-feedback d-block">{{ $message }}</div>
+              @enderror
             </div>
           </div>
         </div>
@@ -118,11 +137,17 @@
           <div class="row g-3">
             <div class="col-md-6">
               <label class="form-label">Password *</label>
-              <input type="password" name="password" class="form-control" id="signupPassword" required placeholder="At least 6 characters">
+              <input type="password" name="password" class="form-control @error('password') is-invalid @enderror" id="signupPassword" required placeholder="At least 6 characters">
+              @error('password')
+                <div class="invalid-feedback d-block">{{ $message }}</div>
+              @enderror
             </div>
             <div class="col-md-6">
               <label class="form-label">Confirm Password *</label>
-              <input type="password" name="password_confirmation" class="form-control" id="confirmPassword" required placeholder="Re-enter password">
+              <input type="password" name="password_confirmation" class="form-control @error('password_confirmation') is-invalid @enderror" id="confirmPassword" required placeholder="Re-enter password">
+              @error('password_confirmation')
+                <div class="invalid-feedback d-block">{{ $message }}</div>
+              @enderror
             </div>
           </div>
         </div>
@@ -133,23 +158,38 @@
           <div class="row g-3">
             <div class="col-12">
               <label class="form-label">Street Address</label>
-              <input type="text" name="address" class="form-control" id="address" value="{{ old('address') }}" placeholder="Apartment / Flat / House No, Street">
+              <input type="text" name="address" class="form-control @error('address') is-invalid @enderror" id="address" value="{{ old('address') }}" placeholder="Apartment / Flat / House No, Street">
+              @error('address')
+                <div class="invalid-feedback d-block">{{ $message }}</div>
+              @enderror
             </div>
             <div class="col-md-3 col-6">
               <label class="form-label">City</label>
-              <input type="text" name="city" class="form-control" id="city" value="{{ old('city') }}" placeholder="Mumbai">
+              <input type="text" name="city" class="form-control @error('city') is-invalid @enderror" id="city" value="{{ old('city') }}" placeholder="Mumbai">
+              @error('city')
+                <div class="invalid-feedback d-block">{{ $message }}</div>
+              @enderror
             </div>
             <div class="col-md-3 col-6">
               <label class="form-label">State</label>
-              <input type="text" name="state" class="form-control" id="state" value="{{ old('state') }}" placeholder="Maharashtra">
+              <input type="text" name="state" class="form-control @error('state') is-invalid @enderror" id="state" value="{{ old('state') }}" placeholder="Maharashtra">
+              @error('state')
+                <div class="invalid-feedback d-block">{{ $message }}</div>
+              @enderror
             </div>
             <div class="col-md-3 col-6">
               <label class="form-label">Country</label>
-              <input type="text" name="country" class="form-control" id="country" value="{{ old('country', 'India') }}">
+              <input type="text" name="country" class="form-control @error('country') is-invalid @enderror" id="country" value="{{ old('country', 'India') }}">
+              @error('country')
+                <div class="invalid-feedback d-block">{{ $message }}</div>
+              @enderror
             </div>
             <div class="col-md-3 col-6">
               <label class="form-label">ZIP / Postal Code</label>
-              <input type="text" name="zip_code" class="form-control" id="zipCode" value="{{ old('zip_code') }}" placeholder="400001">
+              <input type="text" name="zip_code" class="form-control @error('zip_code') is-invalid @enderror" id="zipCode" value="{{ old('zip_code') }}" placeholder="400001">
+              @error('zip_code')
+                <div class="invalid-feedback d-block">{{ $message }}</div>
+              @enderror
             </div>
           </div>
         </div>
@@ -174,15 +214,24 @@
             <div class="row g-3">
               <div class="col-md-6">
                 <label class="form-label">Driving License Number</label>
-                <input type="text" name="dl_number" class="form-control" id="dlNumber" value="{{ old('dl_number') }}" placeholder="MH-0120230012345">
+                <input type="text" name="dl_number" class="form-control @error('dl_number') is-invalid @enderror" id="dlNumber" value="{{ old('dl_number') }}" placeholder="MH-0120230012345">
+                @error('dl_number')
+                  <div class="invalid-feedback d-block">{{ $message }}</div>
+                @enderror
               </div>
               <div class="col-md-6">
                 <label class="form-label">License Expiry Date</label>
-                <input type="date" name="dl_expiry" class="form-control" id="dlExpiry" value="{{ old('dl_expiry') }}">
+                <input type="date" name="dl_expiry" class="form-control @error('dl_expiry') is-invalid @enderror" id="dlExpiry" value="{{ old('dl_expiry') }}">
+                @error('dl_expiry')
+                  <div class="invalid-feedback d-block">{{ $message }}</div>
+                @enderror
               </div>
               <div class="col-12">
                 <label class="form-label">Upload Driving License Copy (Front & Back)</label>
-                <input type="file" name="dl_file" class="form-control" id="dlFile">
+                <input type="file" name="dl_file" class="form-control @error('dl_file') is-invalid @enderror" id="dlFile">
+                @error('dl_file')
+                  <div class="invalid-feedback d-block">{{ $message }}</div>
+                @enderror
               </div>
             </div>
           </div>
@@ -194,19 +243,28 @@
             <div class="row g-3">
               <div class="col-md-4">
                 <label class="form-label">Select ID Type</label>
-                <select name="alt_id_type" class="form-select" id="altIdType">
+                <select name="alt_id_type" class="form-select @error('alt_id_type') is-invalid @enderror" id="altIdType">
                   <option value="Aadhaar Card" {{ old('alt_id_type') == 'Aadhaar Card' ? 'selected' : '' }}>Aadhaar Card</option>
                   <option value="Passport" {{ old('alt_id_type') == 'Passport' ? 'selected' : '' }}>Passport</option>
                   <option value="Voter ID" {{ old('alt_id_type') == 'Voter ID' ? 'selected' : '' }}>Voter ID</option>
                 </select>
+                @error('alt_id_type')
+                  <div class="invalid-feedback d-block">{{ $message }}</div>
+                @enderror
               </div>
               <div class="col-md-8">
                 <label class="form-label">Government ID Number</label>
-                <input type="text" name="alt_id_number" class="form-control" id="altIdNumber" value="{{ old('alt_id_number') }}" placeholder="Enter Aadhaar / Passport / Voter ID No.">
+                <input type="text" name="alt_id_number" class="form-control @error('alt_id_number') is-invalid @enderror" id="altIdNumber" value="{{ old('alt_id_number') }}" placeholder="Enter Aadhaar / Passport / Voter ID No.">
+                @error('alt_id_number')
+                  <div class="invalid-feedback d-block">{{ $message }}</div>
+                @enderror
               </div>
               <div class="col-12">
                 <label class="form-label">Upload Alternate ID Document</label>
-                <input type="file" name="alt_id_file" class="form-control" id="altIdFile">
+                <input type="file" name="alt_id_file" class="form-control @error('alt_id_file') is-invalid @enderror" id="altIdFile">
+                @error('alt_id_file')
+                  <div class="invalid-feedback d-block">{{ $message }}</div>
+                @enderror
               </div>
             </div>
           </div>

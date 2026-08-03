@@ -10,34 +10,61 @@
         <div class="bg-surface p-4 p-sm-5 rounded-card border shadow-xs">
           <span class="section-label">Get In Touch</span>
           <h3 class="fw-800 font-heading mb-3">Send Us a Message</h3>
+          @if ($errors->any())
+            <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+              <i class="fas fa-exclamation-circle me-2"></i><strong>Please fix the following errors:</strong>
+              <ul class="mb-0 mt-2 ps-3 font-sm">
+                @foreach ($errors->all() as $error)
+                  <li>{{ $error }}</li>
+                @endforeach
+              </ul>
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          @endif
+
           <form action="{{url('/ins_contact')}}" method="POST">
             @csrf
             <div class="row g-3">
               <div class="col-md-6">
-                <label class="form-label">Name</label>
-                <input type="text" class="form-control" required placeholder="" name="name">
+                <label class="form-label">Name *</label>
+                <input type="text" class="form-control @error('name') is-invalid @enderror" value="{{ old('name') }}" required placeholder="e.g. Rahul Sharma" name="name">
+                @error('name')
+                  <div class="invalid-feedback d-block">{{ $message }}</div>
+                @enderror
               </div>
               <div class="col-md-6">
-                <label class="form-label">Email Address</label>
-                <input type="email" class="form-control" required placeholder="" name="email">
+                <label class="form-label">Email Address *</label>
+                <input type="email" class="form-control @error('email') is-invalid @enderror" value="{{ old('email') }}" required placeholder="e.g. rahul@example.com" name="email">
+                @error('email')
+                  <div class="invalid-feedback d-block">{{ $message }}</div>
+                @enderror
               </div>
               <div class="col-md-6">
-                <label class="form-label">Phone Number</label>
-                <input type="tel"  class="form-control" placeholder="+91 98765 43210" name="phone">
+                <label class="form-label">Phone Number *</label>
+                <input type="tel" class="form-control @error('phone') is-invalid @enderror" value="{{ old('phone') }}" required placeholder="+91 98765 43210" name="phone">
+                @error('phone')
+                  <div class="invalid-feedback d-block">{{ $message }}</div>
+                @enderror
               </div>
               <div class="col-md-6">
-                <label class="form-label">Subject</label>
-                <select class="form-select" required name="subject">
+                <label class="form-label">Subject *</label>
+                <select class="form-select @error('subject') is-invalid @enderror" required name="subject">
                   <option value="">Select Query Type</option>
-                  <option value="Booking Inquiry">Booking Inquiry</option>
-                  <option value="Cancellation & Refund">Cancellation & Refund</option>
-                  <option value="Corporate Rental">Corporate Rental</option>
-                  <option value="General Question">General Question</option>
+                  <option value="Booking Inquiry" {{ old('subject') == 'Booking Inquiry' ? 'selected' : '' }}>Booking Inquiry</option>
+                  <option value="Cancellation & Refund" {{ old('subject') == 'Cancellation & Refund' ? 'selected' : '' }}>Cancellation & Refund</option>
+                  <option value="Corporate Rental" {{ old('subject') == 'Corporate Rental' ? 'selected' : '' }}>Corporate Rental</option>
+                  <option value="General Question" {{ old('subject') == 'General Question' ? 'selected' : '' }}>General Question</option>
                 </select>
+                @error('subject')
+                  <div class="invalid-feedback d-block">{{ $message }}</div>
+                @enderror
               </div>
               <div class="col-12">
                 <label class="form-label">Message *</label>
-                <textarea class="form-control" rows="4" required placeholder="How can we help you?" name="message"></textarea>
+                <textarea class="form-control @error('message') is-invalid @enderror" rows="4" required placeholder="How can we help you?" name="message">{{ old('message') }}</textarea>
+                @error('message')
+                  <div class="invalid-feedback d-block">{{ $message }}</div>
+                @enderror
               </div>
             </div>
             <button type="submit" class="btn btn-primary-brand btn-lg-brand mt-4">Send Message <i class="fas fa-paper-plane ms-2"></i></button>
@@ -89,15 +116,5 @@
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="{{url('website/js/ui.js')}}"></script>
-<script>
-  $('#contactForm').on('submit', function(e){
-    e.preventDefault();
-    if (typeof Toast !== 'undefined') {
-      Toast.success('Message Sent', 'Thank you! Our support team will get back to you within 2 hours.');
-    } else {
-      alert('Thank you! Our support team will get back to you within 2 hours.');
-    }
-    this.reset();
-  });
-</script>
+@include('sweetalert::alert')
 @endsection
