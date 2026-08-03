@@ -62,11 +62,11 @@
               </div>
             </td>
             <td class="font-sm">
-              <div>{{ $b->pickupLocation->name ?? 'Pickup' }}</div>
+              <div class="fw-600 text-truncate" style="max-width: 150px;" title="{{ $b->pickup_display_address }}">{{ $b->pickup_display_address }}</div>
               <div class="font-xs text-muted">{{ \Carbon\Carbon::parse($b->pickup_date)->format('d M Y') }}</div>
             </td>
             <td class="font-sm">
-              <div>{{ $b->dropoffLocation->name ?? 'Dropoff' }}</div>
+              <div class="fw-600 text-truncate" style="max-width: 150px;" title="{{ $b->dropoff_display_address }}">{{ $b->dropoff_display_address }}</div>
               <div class="font-xs text-muted">{{ \Carbon\Carbon::parse($b->return_date)->format('d M Y') }}</div>
             </td>
             <td class="fw-600 text-center">{{ $b->rental_days }} Days</td>

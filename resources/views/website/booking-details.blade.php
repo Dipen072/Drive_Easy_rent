@@ -83,17 +83,35 @@
         <div class="row g-4 font-sm">
           <div class="col-md-6">
             <div class="p-3 bg-surface-2 rounded border">
-              <div class="fw-700 text-primary mb-2"><i class="fas fa-map-marker-alt me-1"></i> Pickup Branch</div>
-              <div class="fw-600">{{ $booking->pickupLocation->name ?? 'Branch Pickup' }}</div>
-              <div class="text-muted font-xs">{{ $booking->pickupLocation->address ?? '' }}</div>
+              <div class="fw-700 text-primary mb-2"><i class="fas fa-map-marker-alt me-1"></i> Pickup Location</div>
+              <div class="fw-600">{{ $booking->pickup_display_address }}</div>
+              @if($booking->pickupLocation && $booking->pickupLocation->address)
+                <div class="text-muted font-xs">{{ $booking->pickupLocation->address }}</div>
+              @endif
+              @if($booking->pickup_lat && $booking->pickup_lng)
+                <div class="mt-2">
+                  <a href="https://maps.google.com/?q={{ $booking->pickup_lat }},{{ $booking->pickup_lng }}" target="_blank" class="btn btn-xs btn-outline-primary font-xs">
+                    <i class="fas fa-directions me-1"></i> View on Google Maps
+                  </a>
+                </div>
+              @endif
               <div class="mt-2 font-xs text-secondary">Date: <strong>{{ \Carbon\Carbon::parse($booking->pickup_date)->format('M d, Y') }} at {{ $booking->pickup_time }}</strong></div>
             </div>
           </div>
           <div class="col-md-6">
             <div class="p-3 bg-surface-2 rounded border">
-              <div class="fw-700 text-primary mb-2"><i class="fas fa-flag-checkered me-1"></i> Drop-off Branch</div>
-              <div class="fw-600">{{ $booking->dropoffLocation->name ?? 'Branch Dropoff' }}</div>
-              <div class="text-muted font-xs">{{ $booking->dropoffLocation->address ?? '' }}</div>
+              <div class="fw-700 text-primary mb-2"><i class="fas fa-flag-checkered me-1"></i> Drop-off Location</div>
+              <div class="fw-600">{{ $booking->dropoff_display_address }}</div>
+              @if($booking->dropoffLocation && $booking->dropoffLocation->address)
+                <div class="text-muted font-xs">{{ $booking->dropoffLocation->address }}</div>
+              @endif
+              @if($booking->dropoff_lat && $booking->dropoff_lng)
+                <div class="mt-2">
+                  <a href="https://maps.google.com/?q={{ $booking->dropoff_lat }},{{ $booking->dropoff_lng }}" target="_blank" class="btn btn-xs btn-outline-success font-xs">
+                    <i class="fas fa-directions me-1"></i> View on Google Maps
+                  </a>
+                </div>
+              @endif
               <div class="mt-2 font-xs text-secondary">Date: <strong>{{ \Carbon\Carbon::parse($booking->return_date)->format('M d, Y') }} at {{ $booking->return_time }}</strong></div>
             </div>
           </div>

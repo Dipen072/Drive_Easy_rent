@@ -21,10 +21,20 @@ function initRentalDetails() {
   const pDate = urlParams.get('pdate') || today;
   const rDate = urlParams.get('rdate') || nextThreeDays;
 
-  const paramLoc = urlParams.get('pickup') || urlParams.get('location_id');
+  const paramLoc = urlParams.get('pickup') || urlParams.get('location_id') || urlParams.get('pickup_address');
   if (paramLoc) {
     $('#rentPickupLoc').val(paramLoc);
     $('#rentDropLoc').val(paramLoc);
+    $('#rentPickupAddress').val(paramLoc);
+  }
+
+  if (typeof DriveEaseLocationPicker !== 'undefined') {
+    DriveEaseLocationPicker.setupAutocomplete(
+      'rentPickupAddress', 'rentPickupLat', 'rentPickupLng', 'btnMapPickup', 'btnGpsPickup'
+    );
+    DriveEaseLocationPicker.setupAutocomplete(
+      'rentDropAddress', 'rentDropLat', 'rentDropLng', 'btnMapDrop', 'btnGpsDrop'
+    );
   }
 
   if (typeof flatpickr !== 'undefined') {
@@ -50,6 +60,38 @@ function initRentalDetails() {
     $('#rentReturnDate').val(rDate);
   }
 }
+
+window.switchLocationMode = function(mode) {
+  if (mode === 'doorstep') {
+    $('#modeDoorstepBtn').addClass('btn-primary').removeClass('btn-outline-secondary');
+    $('#modeBranchBtn').addClass('btn-outline-secondary').removeClass('btn-primary');
+    $('#doorstepLocationSection').removeClass('d-none');
+    $('#branchLocationSection').addClass('d-none');
+
+    $('#rentPickupAddress').prop('required', true);
+    $('#rentPickupLoc, #rentDropLoc').prop('required', false).val('');
+  } else {
+    $('#modeBranchBtn').addClass('btn-primary').removeClass('btn-outline-secondary');
+    $('#modeDoorstepBtn').addClass('btn-outline-secondary').removeClass('btn-primary');
+    $('#branchLocationSection').removeClass('d-none');
+    $('#doorstepLocationSection').addClass('d-none');
+
+    $('#rentPickupAddress, #rentDropAddress').prop('required', false).val('');
+    $('#rentPickupLat, #rentPickupLng, #rentDropLat, #rentDropLng').val('');
+    $('#rentPickupLoc, #rentDropLoc').prop('required', true);
+  }
+};
+
+window.toggleDiffDropoff = function(checked) {
+  if (checked) {
+    $('#dropoffAddressContainer').removeClass('d-none');
+    $('#rentDropAddress').prop('required', true);
+  } else {
+    $('#dropoffAddressContainer').addClass('d-none');
+    $('#rentDropAddress').prop('required', false).val('');
+    $('#rentDropLat, #rentDropLng').val('');
+  }
+};
 
 function calculateTotals() {
   const carId = $('#carId').val();

@@ -61,25 +61,19 @@ function initNavbarAuth() {
 // 2. POPULATE LOCATIONS
 // ============================================================
 function populateLocations() {
-  const locations = Storage.getLocations();
-  const $pickup   = $('#pickupLocation');
-  const $dropoff  = $('#dropoffLocation');
-
-  locations.forEach(loc => {
-    const opt = `<option value="${loc.id}">${loc.name} (${loc.city})</option>`;
-    $pickup.append(opt);
-    $dropoff.append(opt);
-  });
-}
-
-function setPickupLocation(name) {
-  const locations = Storage.getLocations();
-  const found = locations.find(l => l.name.toLowerCase().includes(name.toLowerCase()) || l.city.toLowerCase().includes(name.toLowerCase()));
-  if (found) {
-    $('#pickupLocation').val(found.id).addClass('is-valid');
-    Toast.info('Location Selected', `Set pickup location to ${found.name}`);
+  if (typeof DriveEaseLocationPicker !== 'undefined') {
+    DriveEaseLocationPicker.setupAutocomplete(
+      'heroPickupAddress', 'heroPickupLat', 'heroPickupLng', null, 'heroGpsBtn'
+    );
   }
 }
+
+window.setPickupLocation = function(name) {
+  $('#heroPickupAddress').val(name);
+  if (typeof Toast !== 'undefined') {
+    Toast.info('Location Selected', `Set pickup location to ${name}`);
+  }
+};
 
 // ============================================================
 // 3. DATE PICKERS
@@ -259,32 +253,34 @@ function initEventListeners() {
 
   // Search Cars Button Click
   $('#searchCarsBtn').on('click', function() {
-    const pickup = $('#pickupLocation').val();
+    const pickup = $('#heroPickupAddress').val().trim();
     const pDate  = $('#pickupDate').val();
     const rDate  = $('#returnDate').val();
 
     if (!pickup) {
-      Toast.warning('Select Location', 'Please select a pickup location.');
-      $('#pickupLocation').focus();
+      if (typeof Toast !== 'undefined') {
+        Toast.warning('Select Location', 'Please enter a pickup location or address.');
+      } else {
+        alert('Please enter a pickup location or address.');
+      }
+      $('#heroPickupAddress').focus();
       return;
     }
     if (!pDate || !rDate) {
-      Toast.warning('Select Dates', 'Please select pickup and return dates.');
+      if (typeof Toast !== 'undefined') {
+        Toast.warning('Select Dates', 'Please select pickup and return dates.');
+      } else {
+        alert('Please select pickup and return dates.');
+      }
       return;
     }
 
-    const searchParams = {
-      pickupLocation: pickup,
-      dropoffLocation: $('#dropoffLocation').val() || pickup,
-      pickupDate: pDate,
-      returnDate: rDate
-    };
-
-    Storage.saveSearch(searchParams);
-    Toast.success('Searching Cars', 'Redirecting to available cars...');
+    if (typeof Toast !== 'undefined') {
+      Toast.success('Searching Cars', 'Redirecting to available cars...');
+    }
     setTimeout(() => {
-      window.location.href = `cars.html?pickup=${pickup}&pdate=${pDate}&rdate=${rDate}`;
-    }, 600);
+      window.location.href = `/cars?pickup=${encodeURIComponent(pickup)}&pdate=${pDate}&rdate=${rDate}`;
+    }, 400);
   });
 
   // Newsletter Submit

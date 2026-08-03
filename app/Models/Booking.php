@@ -15,6 +15,12 @@ class Booking extends Model
         'car_id',
         'pickup_location_id',
         'dropoff_location_id',
+        'pickup_address',
+        'pickup_lat',
+        'pickup_lng',
+        'dropoff_address',
+        'dropoff_lat',
+        'dropoff_lng',
         'pickup_date',
         'return_date',
         'pickup_time',
@@ -33,6 +39,22 @@ class Booking extends Model
         'confirmed_at',
         'completed_at',
     ];
+
+    public function getPickupDisplayAddressAttribute(): string
+    {
+        if (!empty($this->pickup_address)) {
+            return $this->pickup_address;
+        }
+        return $this->pickupLocation ? ($this->pickupLocation->name . ' (' . $this->pickupLocation->city . ')') : 'N/A';
+    }
+
+    public function getDropoffDisplayAddressAttribute(): string
+    {
+        if (!empty($this->dropoff_address)) {
+            return $this->dropoff_address;
+        }
+        return $this->dropoffLocation ? ($this->dropoffLocation->name . ' (' . $this->dropoffLocation->city . ')') : 'N/A';
+    }
 
     protected $casts = [
         'pickup_date'  => 'date',

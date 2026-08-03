@@ -88,23 +88,90 @@
           <!-- STEP 2: RENTAL DETAILS -->
           <div class="step-content bg-surface p-4 rounded-card border shadow-xs d-none" id="step2">
             <h5 class="fw-700 font-heading mb-3"><i class="fas fa-calendar-alt text-primary me-2"></i>Step 2: Pickup & Return Setup</h5>
-            <div class="row g-3">
-              <div class="col-md-6">
-                <label class="form-label">Pickup Branch *</label>
-                <select id="rentPickupLoc" name="pickup_location_id" class="form-select" required>
-                  @foreach($locations as $loc)
-                    <option value="{{ $loc->id }}">{{ $loc->name }} ({{ $loc->city }})</option>
-                  @endforeach
-                </select>
+            
+            <!-- LOCATION TYPE SELECTOR -->
+            <div class="mb-4 p-2 bg-light rounded d-flex gap-2">
+              <button type="button" class="btn btn-sm flex-fill fw-600 active-loc-type btn-primary" id="modeDoorstepBtn" onclick="switchLocationMode('doorstep')">
+                <i class="fas fa-map-marker-alt me-1"></i> Doorstep Pickup / Any Address (Uber/Ola Style)
+              </button>
+              <button type="button" class="btn btn-sm flex-fill fw-600 btn-outline-secondary" id="modeBranchBtn" onclick="switchLocationMode('branch')">
+                <i class="fas fa-building me-1"></i> Pickup from Branch Hub
+              </button>
+            </div>
+
+            <!-- DOORSTEP PICKUP SECTION (REAL LOCATION SEARCH) -->
+            <div id="doorstepLocationSection">
+              <div class="row g-3">
+                <!-- Pickup Address -->
+                <div class="col-12">
+                  <label class="form-label fw-600">Pickup Location / Address *</label>
+                  <div class="input-group">
+                    <span class="input-group-text bg-white text-primary"><i class="fas fa-search-location"></i></span>
+                    <input type="text" class="form-control" name="pickup_address" id="rentPickupAddress" required placeholder="Type any landmark, street, city or address (e.g. Bandra West, Mumbai)">
+                    <button type="button" class="btn btn-outline-primary" id="btnGpsPickup" title="Use current GPS location">
+                      <i class="fas fa-crosshairs me-1"></i> GPS
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" id="btnMapPickup" title="Select on map">
+                      <i class="fas fa-map-marked-alt me-1"></i> Pin Map
+                    </button>
+                  </div>
+                  <input type="hidden" name="pickup_lat" id="rentPickupLat">
+                  <input type="hidden" name="pickup_lng" id="rentPickupLng">
+                </div>
+
+                <!-- Checkbox for Different Dropoff Address -->
+                <div class="col-12">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="diffDropoffCheck" onchange="toggleDiffDropoff(this.checked)">
+                    <label class="form-check-label text-muted font-sm" for="diffDropoffCheck">
+                      Drop-off at a different location
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Drop-off Address (Conditional) -->
+                <div class="col-12 d-none" id="dropoffAddressContainer">
+                  <label class="form-label fw-600">Drop-off Location / Address *</label>
+                  <div class="input-group">
+                    <span class="input-group-text bg-white text-success"><i class="fas fa-flag-checkered"></i></span>
+                    <input type="text" class="form-control" name="dropoff_address" id="rentDropAddress" placeholder="Type drop-off landmark, street or city">
+                    <button type="button" class="btn btn-outline-success" id="btnGpsDrop" title="Use current GPS location">
+                      <i class="fas fa-crosshairs me-1"></i> GPS
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" id="btnMapDrop" title="Select on map">
+                      <i class="fas fa-map-marked-alt me-1"></i> Pin Map
+                    </button>
+                  </div>
+                  <input type="hidden" name="dropoff_lat" id="rentDropLat">
+                  <input type="hidden" name="dropoff_lng" id="rentDropLng">
+                </div>
               </div>
-              <div class="col-md-6">
-                <label class="form-label">Drop-off Branch *</label>
-                <select id="rentDropLoc" name="dropoff_location_id" class="form-select" required>
-                  @foreach($locations as $loc)
-                    <option value="{{ $loc->id }}">{{ $loc->name }} ({{ $loc->city }})</option>
-                  @endforeach
-                </select>
+            </div>
+
+            <!-- BRANCH HUB SECTION (HIDDEN BY DEFAULT WHEN DOORSTEP ACTIVE) -->
+            <div id="branchLocationSection" class="d-none">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label">Pickup Branch</label>
+                  <select id="rentPickupLoc" name="pickup_location_id" class="form-select">
+                    @foreach($locations as $loc)
+                      <option value="{{ $loc->id }}">{{ $loc->name }} ({{ $loc->city }})</option>
+                    @endforeach
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Drop-off Branch</label>
+                  <select id="rentDropLoc" name="dropoff_location_id" class="form-select">
+                    @foreach($locations as $loc)
+                      <option value="{{ $loc->id }}">{{ $loc->name }} ({{ $loc->city }})</option>
+                    @endforeach
+                  </select>
+                </div>
               </div>
+            </div>
+
+            <!-- DATES & TIMES -->
+            <div class="row g-3 mt-2">
               <div class="col-md-6">
                 <label class="form-label">Pickup Date *</label>
                 <input type="text" class="form-control" name="pickup_date" id="rentPickupDate" required readonly>
@@ -134,6 +201,7 @@
                 </select>
               </div>
             </div>
+
             <div class="d-flex justify-content-between mt-4">
               <button type="button" class="btn btn-outline-secondary" onclick="prevStep(2)"><i class="fas fa-arrow-left me-1"></i> Back</button>
               <button type="button" class="btn btn-primary-brand" onclick="nextStep(2)">Next: Extra Services <i class="fas fa-arrow-right ms-1"></i></button>

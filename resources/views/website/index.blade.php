@@ -27,18 +27,16 @@
               </button>
             </div>
             <div class="bw-fields">
-              <div class="bw-field" id="pickupField">
-                <label><i class="fas fa-map-marker-alt text-primary me-1"></i>Pickup Location</label>
-                <select id="pickupLocation" class="form-select border-0 ps-0 fw-500">
-                  <option value="">Select city / airport</option>
-                </select>
-              </div>
-              <div class="bw-divider"></div>
-              <div class="bw-field" id="dropoffField">
-                <label><i class="fas fa-map-marker-check text-success me-1"></i>Drop-off Location</label>
-                <select id="dropoffLocation" class="form-select border-0 ps-0 fw-500">
-                  <option value="">Same as pickup</option>
-                </select>
+              <div class="bw-field flex-grow-1" id="pickupField">
+                <label><i class="fas fa-map-marker-alt text-primary me-1"></i>Pickup Address / City</label>
+                <div class="d-flex align-items-center">
+                  <input type="text" id="heroPickupAddress" class="form-control border-0 ps-0 fw-500" placeholder="Enter any city, airport or address (e.g. Bandra, Mumbai)">
+                  <button type="button" class="btn btn-link text-primary p-0 ms-1 border-0" id="heroGpsBtn" title="Detect Current GPS Location">
+                    <i class="fas fa-crosshairs fs-6"></i>
+                  </button>
+                </div>
+                <input type="hidden" id="heroPickupLat">
+                <input type="hidden" id="heroPickupLng">
               </div>
               <div class="bw-divider"></div>
               <div class="bw-field">
