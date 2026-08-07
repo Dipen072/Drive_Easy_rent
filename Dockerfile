@@ -37,10 +37,6 @@ ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
-# Configure Apache to support Render dynamic $PORT or default to 80
-RUN sed -i 's/Listen 80/Listen ${PORT:-80}/' /etc/apache2/ports.conf
-RUN sed -i 's/<VirtualHost \*:80>/<VirtualHost *:${PORT:-80}>/' /etc/apache2/sites-available/000-default.conf
-
 # Allow .htaccess overrides for Laravel routing
 RUN echo '<Directory /var/www/html/public>\n\
     Options Indexes FollowSymLinks\n\
@@ -71,7 +67,7 @@ RUN mkdir -p /var/www/html/public/upload/customers/avatars \
     /var/www/html/storage/framework/cache \
     /var/www/html/bootstrap/cache \
     && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/public/upload \
-    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/public/upload
+    && chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/public/upload
 
 # Make entrypoint script executable
 RUN chmod +x /var/www/html/docker-entrypoint.sh
