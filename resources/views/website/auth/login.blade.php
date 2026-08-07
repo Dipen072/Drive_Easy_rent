@@ -9,7 +9,7 @@
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <!-- Custom CSS -->
-  <link rel="stylesheet" href="{{url('website/css/main.css')}}">
+  <link rel="stylesheet" href="{{asset('website/css/main.css')}}">
   <style>
     body { background: var(--surface-2); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
     .auth-card { max-width: 440px; width: 100%; }
@@ -63,9 +63,9 @@
 </div>
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="{{url('website/js/data.js')}}"></script>
-<script src="{{url('website/js/storage.js')}}"></script>
-<script src="{{url('website/js/ui.js')}}"></script>
+<script src="{{asset('website/js/data.js')}}"></script>
+<script src="{{asset('website/js/storage.js')}}"></script>
+<script src="{{asset('website/js/ui.js')}}"></script>
 @include('sweetalert::alert')
 </body>
 </html>
