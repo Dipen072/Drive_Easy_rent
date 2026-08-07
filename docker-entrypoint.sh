@@ -14,6 +14,7 @@ mkdir -p /var/www/html/public/upload/customers/avatars \
          /var/www/html/storage/framework/cache \
          /var/www/html/bootstrap/cache
 
+touch /var/www/html/storage/logs/laravel.log || true
 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/public/upload || true
 chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/public/upload || true
 
@@ -42,10 +43,11 @@ fi
 echo "Creating storage symlink..."
 php artisan storage:link --force || true
 
-# 6. Execute DB Migrations automatically if DB_HOST is defined
+# 6. Execute DB Migrations & Local Data Seeder automatically if DB_HOST is defined
 if [ -n "$DB_HOST" ] && [ "$DB_HOST" != "127.0.0.1" ]; then
-    echo "Database host found ($DB_HOST). Running database migrations..."
+    echo "Database host found ($DB_HOST). Running database migrations and seeding local XAMPP data..."
     php artisan migrate --force || echo "Database migration failed or already up to date."
+    php artisan db:seed --force || echo "Database seeding completed or already run."
 fi
 
 echo "=== DriveEase Ready. Starting Web Server on Port ${CONTAINER_PORT} ==="
